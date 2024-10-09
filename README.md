@@ -8,6 +8,8 @@
 
 <b>Eric Nakayama</b>
 
+<b>Andrew Davalos</b>
+
 ## Technologies used:
 
 - VSCode
