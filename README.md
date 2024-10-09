@@ -12,5 +12,9 @@
 
 ## Technologies used:
 
-- VSCode
+<li>Flutter</li>
+<li>VSCode</li>
+<li>XCode</li>
+<li>Android Studio</li>
+
 
