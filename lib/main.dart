@@ -30,7 +30,14 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+class _MyHomePageState extends State<MyHomePage> {
+  int _counter = 0;
 
+  void _incrementCounter() {
+    setState(() {
+      _counter++;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,25 +57,60 @@ class MyHomePage extends StatefulWidget {
             ),
             ElevatedButton(
               onPressed: () {
-                // Add your log in logic here
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
               },
               child: const Text('Log In'),
             ),
             const SizedBox(height: 10), // Spacing between buttons
             ElevatedButton(
               onPressed: () {
-                // Add your sign up logic here
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignUpPage()),
+                );
               },
               child: const Text('Sign Up'),
             ),
           ],
         ),
       ),
-      /* floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),*/
+    );
+  }
+}
+
+// LoginPage widget
+class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: const Text('Log In')),
+      body: Center(
+        child: const Text('This is the Log In page'),
+      ),
+    );
+  }
+}
+
+// SignUpPage widget
+class SignUpPage extends StatelessWidget {
+  const SignUpPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: const Text('Sign Up')),
+      body: Center(
+        child: const Text('This is the Sign Up page'),
+      ),
     );
   }
 }
