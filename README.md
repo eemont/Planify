@@ -2,13 +2,13 @@
 
 ## __Student names :__
 
-<b>Emmanuel Montoya</b>
+<li>Emmanuel Montoya</li>
 
-<b>Sharon Lopez</b>
+<li>Sharon Lopez</li>
 
-<b>Eric Nakayama</b>
+<li>Eric Nakayama</li>
 
-<b>Andrew Davalos</b>
+<li>Andrew Davalos</li>
 
 ## Technologies used:
 
