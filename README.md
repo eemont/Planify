@@ -2,13 +2,19 @@
 
 ## __Student names :__
 
-<b>Emmanuel Montoya</b>
+<li>Emmanuel Montoya</li>
 
-<b>Sharon Lopez</b>
+<li>Sharon Lopez</li>
 
-<b>Eric Nakayama</b>
+<li>Eric Nakayama</li>
+
+<li>Andrew Davalos</li>
 
 ## Technologies used:
 
-- VSCode
+<li>Flutter</li>
+<li>VSCode</li>
+<li>XCode</li>
+<li>Android Studio</li>
+
 
