@@ -208,21 +208,163 @@ class LoginPageState extends State<LoginPage> {
 }
 
 // SignUpPage widget
-class SignUpPage extends StatelessWidget {
+class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
+
+  @override
+  SignUpPageState createState() {
+    return SignUpPageState();
+  }
+}
+
+class SignUpPageState extends State<SignUpPage> {
+  final _formKey = GlobalKey<FormState>();
+  
+  bool isHiddenPassword = true;
+  bool isHiddenConfirmPassword = true;
+
+  String? password;
+  String? confirmPassword;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: const Text('Sign Up')),
-      body: Center(
-        child: const Text('This is the Sign Up page'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Sign Up'),
+      ),
+      body: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Image.asset(
+              'assets/images/Planify_Logo_Black copy.png',
+              width: 200,
+              height: 200,
+            ),
+            Container(
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 500,
+                child: TextFormField(
+                  decoration: const InputDecoration(
+                    icon: Icon(Icons.person),
+                    border: OutlineInputBorder(),
+                    labelText: 'Full Name',
+                  ),
+                  validator: (fullName) {
+                    if (fullName == null || fullName.isEmpty) {
+                      return 'Please enter your full name';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 500,
+              child: TextFormField(
+                decoration: const InputDecoration(
+                  icon: Icon(Icons.email),
+                  border: OutlineInputBorder(),
+                  labelText: 'Email',
+                ),
+                validator: (email) {
+                  if (email == null || email.isEmpty || !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+                    return 'Please enter a valid email';
+                  }
+                  return null;
+                },
+              ),
+            ),
+            SizedBox(
+              width: 500,
+              child: TextFormField(
+                obscureText: isHiddenPassword,
+                decoration: InputDecoration(
+                  icon: const Icon(Icons.key),
+                  suffixIcon: InkWell(
+                    onTap: _togglePasswordView,
+                    child: const Icon(Icons.visibility),
+                  ),
+                  border: const OutlineInputBorder(),
+                  labelText: 'Password',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a password';
+                  }
+                  password = value;
+                  return null;
+                },
+              ),
+            ),
+            SizedBox(
+              width: 500,
+              child: TextFormField(
+                obscureText: isHiddenConfirmPassword,
+                decoration: InputDecoration(
+                  icon: const Icon(Icons.key),
+                  suffixIcon: InkWell(
+                    onTap: _toggleConfirmPasswordView,
+                    child: const Icon(Icons.visibility),
+                  ),
+                  border: const OutlineInputBorder(),
+                  labelText: 'Re-enter Password',
+                ),
+                validator: (value) {
+                  confirmPassword = value;
+                  if (value == null || value.isEmpty) {
+                    return 'Please re-enter your password';
+                  }
+                  if (value != password) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    // Call to backend for sign up
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Processing Data')),
+                    );
+
+                    // Remove the current snack bar after processing
+                    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SignedInHomePage()),
+                    );
+                  }
+                },
+                child: const Text('Sign Up'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  void _togglePasswordView() {
+    setState(() {
+      isHiddenPassword = !isHiddenPassword;
+    });
+  }
+
+  void _toggleConfirmPasswordView() {
+    setState(() {
+      isHiddenConfirmPassword = !isHiddenConfirmPassword;
+    });
+  }
 }
+
 
   // SignedInHomePage widget
 class SignedInHomePage extends StatelessWidget {
