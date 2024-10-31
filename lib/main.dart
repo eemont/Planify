@@ -336,6 +336,9 @@ class SignUpPageState extends State<SignUpPage> {
                   password = value;
                   return null;
                 },
+                onFieldSubmitted: (value) {
+                  submitSignUpForm();
+                },
               ),
             ),
             SizedBox(
@@ -364,27 +367,17 @@ class SignUpPageState extends State<SignUpPage> {
                   }
                   return null;
                 },
+                onFieldSubmitted: (value) {
+                  submitSignUpForm();
+                },
               ),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: ElevatedButton(
                 onPressed: () {
-                  //FIX
-                  if (_formKey.currentState!.validate()) {
-                    // Call to backend for sign up
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Processing Data')),
-                    );
-
-                    // Remove the current snack bar after processing
-                    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SignedInHomePage()),
-                    );
-                  }
+                  //FIXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                  submitSignUpForm();
                 },
                 child: const Text('Sign Up'),
               ),
