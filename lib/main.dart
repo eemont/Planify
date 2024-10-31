@@ -88,6 +88,23 @@ class LoginPageState extends State<LoginPage> {
 
   bool isHiddenPassword = true;
 
+
+  submitForm() {
+    if(_formKey.currentState!.validate()) {
+      //CALL TO BACKEND
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Processing Data')),
+      );
+
+      //sleep(const Duration(seconds:2));
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SignedInHomePage()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     //Form built using _formKey
@@ -123,6 +140,9 @@ class LoginPageState extends State<LoginPage> {
                     }
                     return null;
                   },
+                  onFieldSubmitted: (username) {
+                    submitForm();
+                  },
                 ),
               ),
               ),
@@ -146,6 +166,9 @@ class LoginPageState extends State<LoginPage> {
                     }
                     return null;
                   },
+                  onFieldSubmitted: (password) {
+                    submitForm();
+                  },
                 ),
               ),
 
@@ -153,19 +176,7 @@ class LoginPageState extends State<LoginPage> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: ElevatedButton(
                   onPressed: () {
-                    if(_formKey.currentState!.validate()) {
-                      //CALL TO BACKEND
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Processing Data')),
-                      );
-
-                      //sleep(const Duration(seconds:2));
-                      ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const SignedInHomePage()),
-                      );
-                    }
+                    submitForm();
                   },
                   child: const Text('Log In'),
                   ),
@@ -226,6 +237,22 @@ class SignUpPageState extends State<SignUpPage> {
   String? password;
   String? confirmPassword;
 
+  submitSignUpForm() {
+    if (_formKey.currentState!.validate()) {
+      // Call to backend for sign up
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Processing Data')),
+      );
+
+      // Remove the current snack bar after processing
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SignedInHomePage()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -259,6 +286,9 @@ class SignUpPageState extends State<SignUpPage> {
                     }
                     return null;
                   },
+                  onFieldSubmitted: (fullName) {
+                    submitSignUpForm();
+                  },
                 ),
               ),
             ),
@@ -275,6 +305,9 @@ class SignUpPageState extends State<SignUpPage> {
                     return 'Please enter a valid email';
                   }
                   return null;
+                },
+                onFieldSubmitted: (email) {
+                  submitSignUpForm();
                 },
               ),
             ),
@@ -306,10 +339,13 @@ class SignUpPageState extends State<SignUpPage> {
                 obscureText: isHiddenConfirmPassword,
                 decoration: InputDecoration(
                   icon: const Icon(Icons.key),
+
+                  //Focus(),
                   suffixIcon: InkWell(
                     onTap: _toggleConfirmPasswordView,
                     child: const Icon(Icons.visibility),
                   ),
+                  
                   border: const OutlineInputBorder(),
                   labelText: 'Re-enter Password',
                 ),
@@ -329,19 +365,7 @@ class SignUpPageState extends State<SignUpPage> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: ElevatedButton(
                 onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    // Call to backend for sign up
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Processing Data')),
-                    );
-
-                    // Remove the current snack bar after processing
-                    ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SignedInHomePage()),
-                    );
-                  }
+                  submitSignUpForm();
                 },
                 child: const Text('Sign Up'),
               ),
@@ -366,7 +390,7 @@ class SignUpPageState extends State<SignUpPage> {
 }
 
 
-  // SignedInHomePage widget
+// SignedInHomePage widget
 class SignedInHomePage extends StatelessWidget {
   const SignedInHomePage({super.key});
 
@@ -377,7 +401,7 @@ class SignedInHomePage extends StatelessWidget {
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: const Text('Home')),
       body: Center(
-        child: const Text('This is the signed in home page'),
+        //child: const Text('This is the signed in home page'),
       ),
     );
   }
