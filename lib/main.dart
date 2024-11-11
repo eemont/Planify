@@ -12,7 +12,7 @@ void main() async {
 }
 
 
-
+// --------------------------------------------------------- App ---------------------------------------------------------
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -41,6 +41,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
+// --------------------------------------------------------- Homepage ---------------------------------------------------------
 class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
@@ -128,7 +129,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-// AddPeoplePage widget
+// --------------------------------------------------------- Add People Page ---------------------------------------------------------
 class AddPeoplePage extends StatefulWidget {
   const AddPeoplePage({super.key});
 
@@ -211,6 +212,8 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
     );
   }
 }
+
+// --------------------------------------------------------- Time Frame page ---------------------------------------------------------
 
 class SelectTimeFramePage extends StatefulWidget {
   const SelectTimeFramePage({super.key});
@@ -301,7 +304,8 @@ class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
 }
 
 
-// LoginPage widget
+// --------------------------------------------------------- Login Page ---------------------------------------------------------
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -434,7 +438,7 @@ class LoginPageState extends State<LoginPage> {
 }
 
 
-// SignUpPage widget
+// --------------------------------------------------------- Sign Up Page ---------------------------------------------------------
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
@@ -627,7 +631,7 @@ class SignUpPageState extends State<SignUpPage> {
   }
 }
 
-
+// --------------------------------------------------------- Signed In ---------------------------------------------------------
 class SignedInHomePage extends StatelessWidget {
   const SignedInHomePage({super.key});
 
