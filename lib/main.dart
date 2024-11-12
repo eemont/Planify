@@ -11,7 +11,6 @@ void main() async {
   runApp(const MyApp());
 }
 
-
 // --------------------------------------------------------- App ---------------------------------------------------------
 
 class MyApp extends StatelessWidget {
@@ -31,7 +30,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// HomePage widget
+// --------------------------------------------------------- Homepage ---------------------------------------------------------
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
@@ -41,7 +41,6 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-// --------------------------------------------------------- Homepage ---------------------------------------------------------
 class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
@@ -76,13 +75,6 @@ class _MyHomePageState extends State<MyHomePage> {
         print('User is currently signed out!');
       } else {
         print('User is signed in!');
-      }
-    });
-
-    // Listening to authentication state changes and printing user UID if signed in
-    FirebaseAuth.instance.authStateChanges().listen((User? user) {
-      if (user != null) {
-        print(user.uid); // Prints the UID of the signed-in user
       }
     });
   }
@@ -130,6 +122,7 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 // --------------------------------------------------------- Add People Page ---------------------------------------------------------
+
 class AddPeoplePage extends StatefulWidget {
   const AddPeoplePage({super.key});
 
@@ -205,7 +198,6 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
               ),
               child: const Text('Next'),
             ),
-
           ],
         ),
       ),
@@ -213,7 +205,7 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
   }
 }
 
-// --------------------------------------------------------- Time Frame page ---------------------------------------------------------
+// --------------------------------------------------------- Time Frame Page ---------------------------------------------------------
 
 class SelectTimeFramePage extends StatefulWidget {
   const SelectTimeFramePage({super.key});
@@ -302,7 +294,6 @@ class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
     );
   }
 }
-
 
 // --------------------------------------------------------- Login Page ---------------------------------------------------------
 
@@ -437,8 +428,8 @@ class LoginPageState extends State<LoginPage> {
   }
 }
 
-
 // --------------------------------------------------------- Sign Up Page ---------------------------------------------------------
+
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
@@ -631,7 +622,8 @@ class SignUpPageState extends State<SignUpPage> {
   }
 }
 
-// --------------------------------------------------------- Signed In ---------------------------------------------------------
+// --------------------------------------------------------- Signed In Home Page ---------------------------------------------------------
+
 class SignedInHomePage extends StatelessWidget {
   const SignedInHomePage({super.key});
 
@@ -691,7 +683,6 @@ class SignedInHomePage extends StatelessWidget {
               ),
               child: const Text('Create Schedule'),
             ),
-
           ],
         ),
       ),
