@@ -50,7 +50,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
     // Check if a user is already signed in at startup and print the UID
     if (FirebaseAuth.instance.currentUser != null) {
-      print(FirebaseAuth.instance.currentUser?.uid); // Prints the UID if a user is signed in
+      print(FirebaseAuth
+          .instance.currentUser?.uid); // Prints the UID if a user is signed in
     }
 
     // Listening to authentication state changes
@@ -152,7 +153,8 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF98D4B1),
-        title: const Text('Add People to Schedule', style: TextStyle(color: Colors.black)),
+        title: const Text('Add People to Schedule',
+            style: TextStyle(color: Colors.black)),
         centerTitle: true,
       ),
       backgroundColor: const Color(0xFFE8F5E9),
@@ -174,7 +176,8 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
                 ),
                 Text(
                   '$numberOfPeople',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 24, fontWeight: FontWeight.bold),
                 ),
                 IconButton(
                   onPressed: increment,
@@ -187,13 +190,18 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const SelectTimeFramePage()),
+                  MaterialPageRoute(
+                    builder: (context) => SelectTimeFramePage(
+                      numberOfPeople: numberOfPeople,
+                    ),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF98D4B1),
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -210,7 +218,9 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
 // --------------------------------------------------------- Time Frame Page ---------------------------------------------------------
 
 class SelectTimeFramePage extends StatefulWidget {
-  const SelectTimeFramePage({super.key});
+  final int numberOfPeople; // Pass this from AddPeoplePage
+
+  const SelectTimeFramePage({required this.numberOfPeople, super.key});
 
   @override
   State<SelectTimeFramePage> createState() => _SelectTimeFramePageState();
@@ -220,7 +230,19 @@ class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
   String? startTime = "10am";
   String? endTime = "6pm";
   final List<String> times = [
-    "8am", "9am", "10am", "11am", "12pm", "1pm", "2pm", "3pm", "4pm", "5pm", "6pm", "7pm", "8pm"
+    "8am",
+    "9am",
+    "10am",
+    "11am",
+    "12pm",
+    "1pm",
+    "2pm",
+    "3pm",
+    "4pm",
+    "5pm",
+    "6pm",
+    "7pm",
+    "8pm"
   ];
 
   @override
@@ -228,7 +250,8 @@ class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF98D4B1),
-        title: const Text('Select Time Frame', style: TextStyle(color: Colors.black)),
+        title: const Text('Select Time Frame',
+            style: TextStyle(color: Colors.black)),
         centerTitle: true,
       ),
       backgroundColor: const Color(0xFFE8F5E9),
@@ -278,17 +301,204 @@ class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Handle the "Next" button functionality (e.g., navigate to another page or save selection)
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ScheduleInputPage(
+                      personIndex: 1, // Start with the first person
+                      totalPeople: widget.numberOfPeople,
+                      startTime: startTime!,
+                      endTime: endTime!,
+                    ),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF98D4B1),
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
               child: const Text('Next'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --------------------------------------------------------- Schedule Input Page ---------------------------------------------------------
+
+class ScheduleInputPage extends StatefulWidget {
+  final int personIndex; // Index of the person (1-based index)
+  final int totalPeople; // Total number of people
+  final String startTime; // Selected start time
+  final String endTime; // Selected end time
+
+  const ScheduleInputPage({
+    required this.personIndex,
+    required this.totalPeople,
+    required this.startTime,
+    required this.endTime,
+    super.key,
+  });
+
+  @override
+  State<ScheduleInputPage> createState() => _ScheduleInputPageState();
+}
+
+class _ScheduleInputPageState extends State<ScheduleInputPage> {
+  late List<String> hours; // List of hours based on the selected timeframe
+  final List<String> days = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday'
+  ];
+  late List<List<bool>>
+      availability; // Grid for availability (true = available, false = unavailable)
+
+  @override
+  void initState() {
+    super.initState();
+    // Generate the list of hours based on the start and end time
+    hours = _generateHours(widget.startTime, widget.endTime);
+    // Initialize the availability grid
+    availability = List.generate(
+        days.length, (_) => List.generate(hours.length, (_) => false));
+  }
+
+  // Helper to generate hours based on start and end time
+  List<String> _generateHours(String start, String end) {
+    const timeMapping = {
+      "6am": 6,
+      "7am": 7,
+      "8am": 8,
+      "9am": 9,
+      "10am": 10,
+      "11am": 11,
+      "12pm": 12,
+      "1pm": 13,
+      "2pm": 14,
+      "3pm": 15,
+      "4pm": 16,
+      "5pm": 17,
+      "6pm": 18,
+      "7pm": 19,
+      "8pm": 20,
+    };
+
+    final startHour = timeMapping[start]!;
+    final endHour = timeMapping[end]!;
+    return List.generate(endHour - startHour + 1, (i) {
+      int hour = (startHour + i) % 24;
+      String period = hour < 12 ? "am" : "pm";
+      if (hour == 0) hour = 12; // Midnight case
+      if (hour > 12) hour -= 12; // Convert to 12-hour format
+      return '$hour$period';
+    });
+  }
+
+  void toggleAvailability(int dayIndex, int hourIndex) {
+    setState(() {
+      availability[dayIndex][hourIndex] = !availability[dayIndex][hourIndex];
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF98D4B1),
+        title: Text(
+          'Person ${widget.personIndex} Schedule',
+          style: const TextStyle(color: Colors.black),
+        ),
+        centerTitle: true,
+      ),
+      backgroundColor: const Color(0xFFE8F5E9),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'Mark your availability',
+              style: const TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: hours.length, // Columns based on hours
+                  childAspectRatio: 1,
+                ),
+                itemCount: days.length * hours.length,
+                itemBuilder: (context, index) {
+                  final dayIndex = index ~/ hours.length;
+                  final hourIndex = index % hours.length;
+                  return GestureDetector(
+                    onTap: () => toggleAvailability(dayIndex, hourIndex),
+                    child: Container(
+                      margin: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: availability[dayIndex][hourIndex]
+                            ? Colors.green
+                            : const Color.fromARGB(255, 149, 149, 149),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.black),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${days[dayIndex]}\n${hours[hourIndex]}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              fontSize: 12, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                if (widget.personIndex < widget.totalPeople) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ScheduleInputPage(
+                        personIndex: widget.personIndex + 1,
+                        totalPeople: widget.totalPeople,
+                        startTime: widget.startTime,
+                        endTime: widget.endTime,
+                      ),
+                    ),
+                  );
+                } else {
+                  // Merge all schedules or navigate to a summary page
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF98D4B1),
+                foregroundColor: Colors.black,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: Text(widget.personIndex < widget.totalPeople
+                  ? 'Next Person'
+                  : 'Finish'),
             ),
           ],
         ),
@@ -384,7 +594,9 @@ class LoginPageState extends State<LoginPage> {
                   if (_formKey.currentState!.validate()) {
                     try {
                       // Attempt to sign in with email and password
-                      final UserCredential credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+                      final UserCredential credential = await FirebaseAuth
+                          .instance
+                          .signInWithEmailAndPassword(
                         email: _emailController.text.trim(),
                         password: _passwordController.text.trim(),
                       );
@@ -396,23 +608,28 @@ class LoginPageState extends State<LoginPage> {
 
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const SignedInHomePage()),
+                        MaterialPageRoute(
+                            builder: (context) => const SignedInHomePage()),
                       );
                     } on FirebaseAuthException catch (e) {
                       // Handle specific Firebase authentication exceptions
                       if (e.code == 'user-not-found') {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('No user found for that email.')),
+                          const SnackBar(
+                              content: Text('No user found for that email.')),
                         );
                       } else if (e.code == 'wrong-password') {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Wrong password provided for that user.')),
+                          const SnackBar(
+                              content: Text(
+                                  'Wrong password provided for that user.')),
                         );
                       }
                     } catch (e) {
                       // Handle any other errors
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Login failed: ${e.toString()}')),
+                        SnackBar(
+                            content: Text('Login failed: ${e.toString()}')),
                       );
                     }
                   }
@@ -432,7 +649,6 @@ class LoginPageState extends State<LoginPage> {
     });
   }
 }
-
 
 // --------------------------------------------------------- Sign Up Page ---------------------------------------------------------
 
@@ -455,7 +671,8 @@ class SignUpPageState extends State<SignUpPage> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -508,7 +725,9 @@ class SignUpPageState extends State<SignUpPage> {
                     labelText: 'Email',
                   ),
                   validator: (email) {
-                    if (email == null || email.isEmpty || !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+                    if (email == null ||
+                        email.isEmpty ||
+                        !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
                       return 'Please enter a valid email';
                     }
                     return null;
@@ -570,13 +789,16 @@ class SignUpPageState extends State<SignUpPage> {
                   if (_formKey.currentState!.validate()) {
                     try {
                       // Create a new user with email and password
-                      final UserCredential credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                      final UserCredential credential = await FirebaseAuth
+                          .instance
+                          .createUserWithEmailAndPassword(
                         email: _emailController.text.trim(),
                         password: _passwordController.text.trim(),
                       );
 
                       // Update the display name with the full name
-                      await credential.user?.updateDisplayName(_fullNameController.text.trim());
+                      await credential.user
+                          ?.updateDisplayName(_fullNameController.text.trim());
 
                       // Show success message and navigate to SignedInHomePage
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -585,23 +807,29 @@ class SignUpPageState extends State<SignUpPage> {
 
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const SignedInHomePage()),
+                        MaterialPageRoute(
+                            builder: (context) => const SignedInHomePage()),
                       );
                     } on FirebaseAuthException catch (e) {
                       // Handle specific Firebase authentication exceptions
                       if (e.code == 'weak-password') {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('The password provided is too weak.')),
+                          const SnackBar(
+                              content:
+                                  Text('The password provided is too weak.')),
                         );
                       } else if (e.code == 'email-already-in-use') {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('The account already exists for that email.')),
+                          const SnackBar(
+                              content: Text(
+                                  'The account already exists for that email.')),
                         );
                       }
                     } catch (e) {
                       // Catch any other errors
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Sign-up failed: ${e.toString()}')),
+                        SnackBar(
+                            content: Text('Sign-up failed: ${e.toString()}')),
                       );
                     }
                   }
@@ -637,7 +865,8 @@ class SignedInHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF98D4B1), // Light green color for AppBar
+        backgroundColor:
+            const Color(0xFF98D4B1), // Light green color for AppBar
         title: const Text('Home', style: TextStyle(color: Colors.black)),
         centerTitle: true,
         actions: [
@@ -676,13 +905,16 @@ class SignedInHomePage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const AddPeoplePage()),
+                  MaterialPageRoute(
+                      builder: (context) => const AddPeoplePage()),
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF98D4B1), // Button color matching AppBar
+                backgroundColor:
+                    const Color(0xFF98D4B1), // Button color matching AppBar
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
