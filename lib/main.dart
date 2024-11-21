@@ -124,6 +124,445 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
+// --------------------------------------------------------- Login Page ---------------------------------------------------------
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  LoginPageState createState() {
+    return LoginPageState();
+  }
+}
+
+// --------------------------------------------------------- Login Page ---------------------------------------------------------
+
+class LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  bool isHiddenPassword = true;
+
+  submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        // Attempt to sign in with email and password
+        final UserCredential credential =
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+
+        // Show success message and navigate to SignedInHomePage
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Login successful!')),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SignedInHomePage()),
+        );
+      } on FirebaseAuthException catch (e) {
+        // Handle specific Firebase authentication exceptions
+        if (e.code == 'user-not-found') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No user found for that email.')),
+          );
+        } else if (e.code == 'wrong-password') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Wrong password provided for that user.')),
+          );
+        }
+      } catch (e) {
+        // Handle any other errors
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  // Controllers for email and password input
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Log In'),
+      ),
+      body: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Image.asset(
+              'assets/images/Planify_Logo_Black copy.png',
+              width: 200,
+              height: 200,
+            ),
+            Container(
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 500,
+                child: TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    icon: Icon(Icons.person),
+                    border: OutlineInputBorder(),
+                    labelText: 'Email',
+                  ),
+                  validator: (email) {
+                    if (email == null || email.isEmpty) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
+                  onFieldSubmitted: (email) {
+                    submitForm();
+                  },
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 500,
+              child: TextFormField(
+                controller: _passwordController,
+                obscureText: isHiddenPassword,
+                decoration: InputDecoration(
+                  icon: const Icon(Icons.key),
+                  suffixIcon: InkWell(
+                    onTap: _togglePasswordView,
+                    child: const Icon(Icons.visibility),
+                  ),
+                  border: const OutlineInputBorder(),
+                  labelText: 'Password',
+                ),
+                validator: (password) {
+                  if (password == null || password.isEmpty) {
+                    return 'Please enter password';
+                  }
+                  return null;
+                },
+                onFieldSubmitted: (password) {
+                  submitForm();
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: ElevatedButton(
+                onPressed: () async {
+                  submitForm();
+                },
+                child: const Text('Log In'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _togglePasswordView() {
+    setState(() {
+      isHiddenPassword = !isHiddenPassword;
+    });
+  }
+}
+
+// --------------------------------------------------------- Sign Up Page ---------------------------------------------------------
+
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
+
+  @override
+  SignUpPageState createState() {
+    return SignUpPageState();
+  }
+}
+
+class SignUpPageState extends State<SignUpPage> {
+  final _formKey = GlobalKey<FormState>();
+
+  bool isHiddenPassword = true;
+  bool isHiddenConfirmPassword = true;
+
+  submitSignUpForm() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        // Create a new user with email and password
+        final UserCredential credential =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+
+        // Update the display name with the full name
+        await credential.user
+            ?.updateDisplayName(_fullNameController.text.trim());
+
+        // Show success message and navigate to SignedInHomePage
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sign-up successful!')),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SignedInHomePage()),
+        );
+      } on FirebaseAuthException catch (e) {
+        // Handle specific Firebase authentication exceptions
+        if (e.code == 'weak-password') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('The password provided is too weak.')),
+          );
+        } else if (e.code == 'email-already-in-use') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('The account already exists for that email.')),
+          );
+        }
+      } catch (e) {
+        // Catch any other errors
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Sign-up failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  // Controllers for full name, email, and password input
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Sign Up'),
+      ),
+      body: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Image.asset(
+              'assets/images/Planify_Logo_Black copy.png',
+              width: 200,
+              height: 200,
+            ),
+            // Full Name Field
+            Container(
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 500,
+                child: TextFormField(
+                  controller: _fullNameController,
+                  decoration: const InputDecoration(
+                    icon: Icon(Icons.person),
+                    border: OutlineInputBorder(),
+                    labelText: 'Full Name',
+                  ),
+                  validator: (fullName) {
+                    if (fullName == null || fullName.isEmpty) {
+                      return 'Please enter your full name';
+                    }
+                    return null;
+                  },
+                  onFieldSubmitted: (fullName) {
+                    submitSignUpForm();
+                  },
+                ),
+              ),
+            ),
+            // Email Field
+            Container(
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: 500,
+                child: TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    icon: Icon(Icons.email),
+                    border: OutlineInputBorder(),
+                    labelText: 'Email',
+                  ),
+                  validator: (email) {
+                    if (email == null ||
+                        email.isEmpty ||
+                        !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
+                  onFieldSubmitted: (email) {
+                    submitSignUpForm();
+                  },
+                ),
+              ),
+            ),
+            // Password Field
+            SizedBox(
+              width: 500,
+              child: TextFormField(
+                controller: _passwordController,
+                obscureText: isHiddenPassword,
+                decoration: InputDecoration(
+                  icon: const Icon(Icons.key),
+                  suffixIcon: InkWell(
+                    onTap: _togglePasswordView,
+                    child: const Icon(Icons.visibility),
+                  ),
+                  border: const OutlineInputBorder(),
+                  labelText: 'Password',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a password';
+                  }
+                  return null;
+                },
+                onFieldSubmitted: (value) {
+                  submitSignUpForm();
+                },
+              ),
+            ),
+            // Confirm Password Field
+            SizedBox(
+              width: 500,
+              child: TextFormField(
+                controller: _confirmPasswordController,
+                obscureText: isHiddenConfirmPassword,
+                decoration: InputDecoration(
+                  icon: const Icon(Icons.key),
+
+                  //Focus(),
+                  suffixIcon: InkWell(
+                    onTap: _toggleConfirmPasswordView,
+                    child: const Icon(Icons.visibility),
+                  ),
+
+                  border: const OutlineInputBorder(),
+                  labelText: 'Confirm Password',
+                ),
+                validator: (value) {
+                  if (value != _passwordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+                onFieldSubmitted: (value) {
+                  submitSignUpForm();
+                },
+              ),
+            ),
+            // Sign-Up Button
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: ElevatedButton(
+                onPressed: () async {
+                  submitSignUpForm();
+                },
+                child: const Text('Sign Up'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _togglePasswordView() {
+    setState(() {
+      isHiddenPassword = !isHiddenPassword;
+    });
+  }
+
+  void _toggleConfirmPasswordView() {
+    setState(() {
+      isHiddenConfirmPassword = !isHiddenConfirmPassword;
+    });
+  }
+}
+
+// --------------------------------------------------------- Signed In Home Page ---------------------------------------------------------
+
+class SignedInHomePage extends StatelessWidget {
+  const SignedInHomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor:
+            const Color(0xFF98D4B1), // Light green color for AppBar
+        title: const Text('Home', style: TextStyle(color: Colors.black)),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.black),
+            onPressed: () async {
+              // Sign out the user
+              await FirebaseAuth.instance.signOut();
+
+              // Show a sign-out confirmation message
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Successfully signed out.')),
+              );
+
+              // Navigate back to the Login page
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+            },
+          ),
+        ],
+      ),
+      backgroundColor: const Color(0xFFE8F5E9), // Light green background color
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Image.asset(
+              'assets/images/Planify_Logo_Black copy.png', // Ensure this path is correct
+              width: 200,
+              height: 200,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const AddPeoplePage()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    const Color(0xFF98D4B1), // Button color matching AppBar
+                foregroundColor: Colors.black,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text('Create Schedule'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // --------------------------------------------------------- Add People Page ---------------------------------------------------------
 
 class AddPeoplePage extends StatefulWidget {
@@ -499,455 +938,6 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
               child: Text(widget.personIndex < widget.totalPeople
                   ? 'Next Person'
                   : 'Finish'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// --------------------------------------------------------- Login Page ---------------------------------------------------------
-
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
-
-  @override
-  LoginPageState createState() {
-    return LoginPageState();
-  }
-}
-
-// --------------------------------------------------------- Login Page ---------------------------------------------------------
-
-class LoginPageState extends State<LoginPage> {
-  final _formKey = GlobalKey<FormState>();
-  bool isHiddenPassword = true;
-
-  submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        // Attempt to sign in with email and password
-        final UserCredential credential = await FirebaseAuth
-          .instance
-            .signInWithEmailAndPassword(
-              email: _emailController.text.trim(),
-              password: _passwordController.text.trim(),
-            );
-
-        // Show success message and navigate to SignedInHomePage
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Login successful!')),
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const SignedInHomePage()),
-        );
-      } on FirebaseAuthException catch (e) {
-        // Handle specific Firebase authentication exceptions
-        if (e.code == 'user-not-found') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No user found for that email.')
-            ),
-          );
-        } else if (e.code == 'wrong-password') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Wrong password provided for that user.')
-            ),
-          );
-        }
-      } catch (e) {
-        // Handle any other errors
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Login failed: ${e.toString()}')
-          ),
-        );
-      }
-    }
-  }
-
-
-  // Controllers for email and password input
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Log In'),
-      ),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Image.asset(
-              'assets/images/Planify_Logo_Black copy.png',
-              width: 200,
-              height: 200,
-            ),
-            Container(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 500,
-                child: TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    icon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
-                    labelText: 'Email',
-                  ),
-                  validator: (email) {
-                    if (email == null || email.isEmpty) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (email) {
-                    submitForm();
-                  },
-                ),
-              ),
-            ),
-            SizedBox(
-              width: 500,
-              child: TextFormField(
-                controller: _passwordController,
-                obscureText: isHiddenPassword,
-                decoration: InputDecoration(
-                  icon: const Icon(Icons.key),
-                  suffixIcon: InkWell(
-                    onTap: _togglePasswordView,
-                    child: const Icon(Icons.visibility),
-                  ),
-                  border: const OutlineInputBorder(),
-                  labelText: 'Password',
-                ),
-                validator: (password) {
-                  if (password == null || password.isEmpty) {
-                    return 'Please enter password';
-                  }
-                  return null;
-                },
-                onFieldSubmitted: (password) {
-                  submitForm();
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: ElevatedButton(
-                onPressed: () async {
-                  submitForm();
-                },
-                child: const Text('Log In'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _togglePasswordView() {
-    setState(() {
-      isHiddenPassword = !isHiddenPassword;
-    });
-  }
-}
-
-// --------------------------------------------------------- Sign Up Page ---------------------------------------------------------
-
-class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
-
-  @override
-  SignUpPageState createState() {
-    return SignUpPageState();
-  }
-}
-
-class SignUpPageState extends State<SignUpPage> {
-  final _formKey = GlobalKey<FormState>();
-
-  bool isHiddenPassword = true;
-  bool isHiddenConfirmPassword = true;
-
-  submitSignUpForm() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        // Create a new user with email and password
-        final UserCredential credential = await FirebaseAuth
-        .instance
-        .createUserWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-
-        // Update the display name with the full name
-        await credential.user
-        ?.updateDisplayName(_fullNameController.text.trim());
-
-        // Show success message and navigate to SignedInHomePage
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sign-up successful!')),
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const SignedInHomePage()
-          ),
-        );
-      } on FirebaseAuthException catch (e) {
-        // Handle specific Firebase authentication exceptions
-        if (e.code == 'weak-password') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('The password provided is too weak.')),
-          );
-        } else if (e.code == 'email-already-in-use') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('The account already exists for that email.')),
-          );
-        }
-      } catch (e) {
-        // Catch any other errors
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sign-up failed: ${e.toString()}')),
-        );
-      }
-    }
-  }
-
-  // Controllers for full name, email, and password input
-  final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Sign Up'),
-      ),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Image.asset(
-              'assets/images/Planify_Logo_Black copy.png',
-              width: 200,
-              height: 200,
-            ),
-            // Full Name Field
-            Container(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 500,
-                child: TextFormField(
-                  controller: _fullNameController,
-                  decoration: const InputDecoration(
-                    icon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
-                    labelText: 'Full Name',
-                  ),
-                  validator: (fullName) {
-                    if (fullName == null || fullName.isEmpty) {
-                      return 'Please enter your full name';
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (fullName) {
-                    submitSignUpForm();
-                  },
-                ),
-              ),
-            ),
-            // Email Field
-            Container(
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: 500,
-                child: TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    icon: Icon(Icons.email),
-                    border: OutlineInputBorder(),
-                    labelText: 'Email',
-                  ),
-                  validator: (email) {
-                    if (email == null ||
-                        email.isEmpty ||
-                        !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (email) {
-                    submitSignUpForm();
-                  },
-                ),
-              ),
-            ),
-            // Password Field
-            SizedBox(
-              width: 500,
-              child: TextFormField(
-                controller: _passwordController,
-                obscureText: isHiddenPassword,
-                decoration: InputDecoration(
-                  icon: const Icon(Icons.key),
-                  suffixIcon: InkWell(
-                    onTap: _togglePasswordView,
-                    child: const Icon(Icons.visibility),
-                  ),
-                  border: const OutlineInputBorder(),
-                  labelText: 'Password',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a password';
-                  }
-                  return null;
-                },
-                onFieldSubmitted: (value) {
-                  submitSignUpForm();
-                },
-              ),
-            ),
-            // Confirm Password Field
-            SizedBox(
-              width: 500,
-              child: TextFormField(
-                controller: _confirmPasswordController,
-                obscureText: isHiddenConfirmPassword,
-                decoration: InputDecoration(
-                  icon: const Icon(Icons.key),
-
-                  //Focus(),
-                  suffixIcon: InkWell(
-                    onTap: _toggleConfirmPasswordView,
-                    child: const Icon(Icons.visibility),
-                  ),
-                  
-                  border: const OutlineInputBorder(),
-                  labelText: 'Confirm Password',
-                ),
-                validator: (value) {
-                  if (value != _passwordController.text) {
-                    return 'Passwords do not match';
-                  }
-                  return null;
-                },
-                onFieldSubmitted: (value) {
-                  submitSignUpForm();
-                },
-              ),
-            ),
-            // Sign-Up Button
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: ElevatedButton(
-                onPressed: () async {
-                  submitSignUpForm();
-                },
-                child: const Text('Sign Up'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _togglePasswordView() {
-    setState(() {
-      isHiddenPassword = !isHiddenPassword;
-    });
-  }
-
-  void _toggleConfirmPasswordView() {
-    setState(() {
-      isHiddenConfirmPassword = !isHiddenConfirmPassword;
-    });
-  }
-}
-
-// --------------------------------------------------------- Signed In Home Page ---------------------------------------------------------
-
-class SignedInHomePage extends StatelessWidget {
-  const SignedInHomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor:
-            const Color(0xFF98D4B1), // Light green color for AppBar
-        title: const Text('Home', style: TextStyle(color: Colors.black)),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black),
-            onPressed: () async {
-              // Sign out the user
-              await FirebaseAuth.instance.signOut();
-
-              // Show a sign-out confirmation message
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Successfully signed out.')),
-              );
-
-              // Navigate back to the Login page
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-              );
-            },
-          ),
-        ],
-      ),
-      backgroundColor: const Color(0xFFE8F5E9), // Light green background color
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Image.asset(
-              'assets/images/Planify_Logo_Black copy.png', // Ensure this path is correct
-              width: 200,
-              height: 200,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const AddPeoplePage()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    const Color(0xFF98D4B1), // Button color matching AppBar
-                foregroundColor: Colors.black,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: const Text('Create Schedule'),
             ),
           ],
         ),
