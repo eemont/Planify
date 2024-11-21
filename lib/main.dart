@@ -524,14 +524,16 @@ class LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   bool isHiddenPassword = true;
 
-  submitForm() async {//Enter key broken ************************************************************************
+  submitForm() async {
     if (_formKey.currentState!.validate()) {
       try {
         // Attempt to sign in with email and password
-        final UserCredential credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
+        final UserCredential credential = await FirebaseAuth
+          .instance
+            .signInWithEmailAndPassword(
+              email: _emailController.text.trim(),
+              password: _passwordController.text.trim(),
+            );
 
         // Show success message and navigate to SignedInHomePage
         ScaffoldMessenger.of(context).showSnackBar(
@@ -540,23 +542,30 @@ class LoginPageState extends State<LoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const SignedInHomePage()),
+          MaterialPageRoute(
+            builder: (context) => const SignedInHomePage()),
         );
       } on FirebaseAuthException catch (e) {
         // Handle specific Firebase authentication exceptions
         if (e.code == 'user-not-found') {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No user found for that email.')),
+            const SnackBar(
+              content: Text('No user found for that email.')
+            ),
           );
         } else if (e.code == 'wrong-password') {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Wrong password provided for that user.')),
+            const SnackBar(
+              content: Text('Wrong password provided for that user.')
+            ),
           );
         }
       } catch (e) {
         // Handle any other errors
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: ${e.toString()}')),
+          SnackBar(
+            content: Text('Login failed: ${e.toString()}')
+          ),
         );
       }
     }
@@ -636,48 +645,7 @@ class LoginPageState extends State<LoginPage> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: ElevatedButton(
                 onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    try {
-                      // Attempt to sign in with email and password
-                      final UserCredential credential = await FirebaseAuth
-                          .instance
-                          .signInWithEmailAndPassword(
-                        email: _emailController.text.trim(),
-                        password: _passwordController.text.trim(),
-                      );
-
-                      // Show success message and navigate to SignedInHomePage
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Login successful!')),
-                      );
-
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const SignedInHomePage()),
-                      );
-                    } on FirebaseAuthException catch (e) {
-                      // Handle specific Firebase authentication exceptions
-                      if (e.code == 'user-not-found') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('No user found for that email.')),
-                        );
-                      } else if (e.code == 'wrong-password') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  'Wrong password provided for that user.')),
-                        );
-                      }
-                    } catch (e) {
-                      // Handle any other errors
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text('Login failed: ${e.toString()}')),
-                      );
-                    }
-                  }
+                  submitForm();
                 },
                 child: const Text('Log In'),
               ),
@@ -716,13 +684,16 @@ class SignUpPageState extends State<SignUpPage> {
     if (_formKey.currentState!.validate()) {
       try {
         // Create a new user with email and password
-        final UserCredential credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        final UserCredential credential = await FirebaseAuth
+        .instance
+        .createUserWithEmailAndPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
 
         // Update the display name with the full name
-        await credential.user?.updateDisplayName(_fullNameController.text.trim());
+        await credential.user
+        ?.updateDisplayName(_fullNameController.text.trim());
 
         // Show success message and navigate to SignedInHomePage
         ScaffoldMessenger.of(context).showSnackBar(
@@ -731,7 +702,9 @@ class SignUpPageState extends State<SignUpPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const SignedInHomePage()),
+          MaterialPageRoute(
+            builder: (context) => const SignedInHomePage()
+          ),
         );
       } on FirebaseAuthException catch (e) {
         // Handle specific Firebase authentication exceptions
@@ -887,53 +860,7 @@ class SignUpPageState extends State<SignUpPage> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: ElevatedButton(
                 onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    try {
-                      // Create a new user with email and password
-                      final UserCredential credential = await FirebaseAuth
-                          .instance
-                          .createUserWithEmailAndPassword(
-                        email: _emailController.text.trim(),
-                        password: _passwordController.text.trim(),
-                      );
-
-                      // Update the display name with the full name
-                      await credential.user
-                          ?.updateDisplayName(_fullNameController.text.trim());
-
-                      // Show success message and navigate to SignedInHomePage
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Sign-up successful!')),
-                      );
-
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const SignedInHomePage()),
-                      );
-                    } on FirebaseAuthException catch (e) {
-                      // Handle specific Firebase authentication exceptions
-                      if (e.code == 'weak-password') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content:
-                                  Text('The password provided is too weak.')),
-                        );
-                      } else if (e.code == 'email-already-in-use') {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text(
-                                  'The account already exists for that email.')),
-                        );
-                      }
-                    } catch (e) {
-                      // Catch any other errors
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content: Text('Sign-up failed: ${e.toString()}')),
-                      );
-                    }
-                  }
+                  submitSignUpForm();
                 },
                 child: const Text('Sign Up'),
               ),
