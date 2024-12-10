@@ -756,14 +756,14 @@ class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF98D4B1),
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
               child: const Text('Next'),
             ),
-
           ],
         ),
       ),
@@ -778,7 +778,8 @@ class ScheduleInputPage extends StatefulWidget {
   final int totalPeople; // Total number of people
   final String startTime; // Selected start time
   final String endTime; // Selected end time
-  final List<List<List<bool>>> allAvailability; // Add a parameter for all users' availability
+  final List<List<List<bool>>>
+      allAvailability; // Add a parameter for all users' availability
 
   const ScheduleInputPage({
     required this.personIndex,
@@ -814,7 +815,7 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
     hours = _generateHours(widget.startTime, widget.endTime);
     // Initialize the availability grid
     availability = List.generate(
-        days.length, (_) => List.generate(hours.length, (_) => false));
+        hours.length, (_) => List.generate(days.length, (_) => false));
   }
 
   // Helper to generate hours based on start and end time
@@ -848,9 +849,9 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
     });
   }
 
-  void toggleAvailability(int dayIndex, int hourIndex) {
+  void toggleAvailability(int hourIndex, int dayIndex) {
     setState(() {
-      availability[dayIndex][hourIndex] = !availability[dayIndex][hourIndex];
+      availability[hourIndex][dayIndex] = !availability[hourIndex][dayIndex];
     });
   }
 
@@ -877,37 +878,99 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: hours.length, // Columns based on hours
-                  childAspectRatio: 1,
-                ),
-                itemCount: days.length * hours.length,
-                itemBuilder: (context, index) {
-                  final dayIndex = index ~/ hours.length;
-                  final hourIndex = index % hours.length;
-                  return GestureDetector(
-                    onTap: () => toggleAvailability(dayIndex, hourIndex),
-                    child: Container(
-                      margin: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: availability[dayIndex][hourIndex]
-                            ? Colors.green
-                            : const Color.fromARGB(255, 149, 149, 149),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.black),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${days[dayIndex]}\n${hours[hourIndex]}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.white),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final gridWidth = constraints.maxWidth;
+                    final gridHeight = constraints.maxHeight;
+
+                    // Calculate dimensions for grid cells
+                    final cellWidth = (gridWidth - 40) / days.length;
+                    final cellHeight = (gridHeight - 40) / hours.length;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Day Labels (Top Edge)
+                        Row(
+                          children: [
+                            const SizedBox(
+                                width: 40), // Empty space for top-left corner
+                            for (var day in days)
+                              Container(
+                                width: cellWidth,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  day.substring(0, 3), // Abbreviated day names
+                                  style: const TextStyle(fontSize: 10),
+                                ),
+                              ),
+                          ],
                         ),
-                      ),
-                    ),
-                  );
-                },
+                        // Schedule Grid
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Hour Labels (Left Edge)
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(
+                                      height:
+                                          20), // Empty space for top-left corner
+                                  for (var hour in hours)
+                                    Container(
+                                      height: cellHeight,
+                                      width: 40,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        hour,
+                                        style: const TextStyle(fontSize: 10),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              Expanded(
+                                child: GridView.builder(
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: days.length,
+                                    childAspectRatio: cellWidth / cellHeight,
+                                  ),
+                                  itemCount: days.length * hours.length,
+                                  itemBuilder: (context, index) {
+                                    final hourIndex = index ~/ days.length;
+                                    final dayIndex = index % days.length;
+                                    return GestureDetector(
+                                      onTap: () => toggleAvailability(
+                                          hourIndex, dayIndex),
+                                      child: Container(
+                                        margin: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          color: availability[hourIndex]
+                                                  [dayIndex]
+                                              ? Colors.green
+                                              : const Color.fromARGB(
+                                                  255, 149, 149, 149),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                          border:
+                                              Border.all(color: Colors.black12),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -926,7 +989,8 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                         totalPeople: widget.totalPeople,
                         startTime: widget.startTime,
                         endTime: widget.endTime,
-                        allAvailability: widget.allAvailability, // Pass the updated list
+                        allAvailability:
+                            widget.allAvailability, // Pass the updated list
                       ),
                     ),
                   );
@@ -964,11 +1028,13 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
   }
 }
 
+// --------------------------------------------------------- Mutual Availability Page ---------------------------------------------------------
 
 class MutualAvailabilityPage extends StatelessWidget {
-  final List<List<List<bool>>> allAvailability; // List of all users' availability
-  final List<String> days;
-  final List<String> hours;
+  final List<List<List<bool>>>
+      allAvailability; // List of all users' availability
+  final List<String> days; // Days on the X-axis
+  final List<String> hours; // Hours on the Y-axis
 
   const MutualAvailabilityPage({
     required this.allAvailability,
@@ -979,14 +1045,14 @@ class MutualAvailabilityPage extends StatelessWidget {
 
   List<List<bool>> calculateMutualAvailability() {
     final mutualAvailability = List.generate(
-      days.length,
-      (_) => List.generate(hours.length, (_) => true),
+      hours.length,
+      (_) => List.generate(days.length, (_) => true),
     );
 
     for (var userAvailability in allAvailability) {
-      for (int day = 0; day < days.length; day++) {
-        for (int hour = 0; hour < hours.length; hour++) {
-          mutualAvailability[day][hour] &= userAvailability[day][hour];
+      for (int hour = 0; hour < hours.length; hour++) {
+        for (int day = 0; day < days.length; day++) {
+          mutualAvailability[hour][day] &= userAvailability[hour][day];
         }
       }
     }
@@ -1001,34 +1067,110 @@ class MutualAvailabilityPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF98D4B1),
-        title: const Text('Mutual Availability', style: TextStyle(color: Colors.black)),
+        title: const Text(
+          'Mutual Availability',
+          style: TextStyle(color: Colors.black),
+        ),
         centerTitle: true,
       ),
       backgroundColor: const Color(0xFFE8F5E9),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: hours.length,
-            childAspectRatio: 1,
-          ),
-          itemCount: days.length * hours.length,
-          itemBuilder: (context, index) {
-            final dayIndex = index ~/ hours.length;
-            final hourIndex = index % hours.length;
-            return Container(
-              margin: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: mutualAvailability[dayIndex][hourIndex] ? Colors.green : Colors.grey,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.black),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Mutual Availability Grid',
+              style: TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final gridWidth = constraints.maxWidth;
+                    final gridHeight = constraints.maxHeight;
+
+                    // Calculate dimensions for grid cells
+                    final cellWidth = (gridWidth - 40) / days.length;
+                    final cellHeight = (gridHeight - 40) / hours.length;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Day Labels (Top Edge)
+                        Row(
+                          children: [
+                            const SizedBox(
+                                width: 40), // Empty space for top-left corner
+                            for (var day in days)
+                              Container(
+                                width: cellWidth,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  day.substring(0, 3), // Abbreviated day names
+                                  style: const TextStyle(fontSize: 10),
+                                ),
+                              ),
+                          ],
+                        ),
+                        // Mutual Availability Grid
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Hour Labels (Left Edge)
+                              Column(
+                                children: [
+                                  for (var hour in hours)
+                                    Container(
+                                      height: cellHeight,
+                                      width: 40,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        hour,
+                                        style: const TextStyle(fontSize: 10),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              Expanded(
+                                child: GridView.builder(
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: days.length,
+                                    childAspectRatio: cellWidth / cellHeight,
+                                  ),
+                                  itemCount: days.length * hours.length,
+                                  itemBuilder: (context, index) {
+                                    final hourIndex = index ~/ days.length;
+                                    final dayIndex = index % days.length;
+                                    return Container(
+                                      margin: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: mutualAvailability[hourIndex]
+                                                [dayIndex]
+                                            ? Colors.green
+                                            : Colors.grey,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border:
+                                            Border.all(color: Colors.black12),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
-              child: Center(
-                child: Text('${days[dayIndex]}\n${hours[hourIndex]}',
-                    textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.white)),
-              ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
