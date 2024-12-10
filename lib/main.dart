@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -574,6 +576,7 @@ class AddPeoplePage extends StatefulWidget {
 
 class _AddPeoplePageState extends State<AddPeoplePage> {
   int numberOfPeople = 1;
+  Color selectedColor = Colors.red;
 
   void increment() {
     setState(() {
@@ -584,6 +587,17 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
   void decrement() {
     setState(() {
       if (numberOfPeople > 1) numberOfPeople--;
+    });
+  }
+/*
+  void changeColor(Color color) {
+    setState(() => pickerColor = color);
+  }
+*/
+
+  void handleColorChanged(Color color) {
+    setState(() {
+      selectedColor = color;
     });
   }
 
@@ -647,11 +661,57 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
               ),
               child: const Text('Next'),
             ),
+
+            //***************************************Experimental Color Picker
+
+            ElevatedButton(
+              onPressed: () => _dialogBuilder(context),
+              child: const Text('Select Color'),
+            ),
+
+            /*BlockPicker(
+              pickerColor: Colors.red,
+              onColorChanged: (Color color) {
+                print(color);
+              },
+            )*/
+
+
+            //***************************************Experimental Color Picker End
+
           ],
         ),
       ),
     );
   }
+    Future<void> _dialogBuilder(BuildContext context) {
+      return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Select Color'),
+            content: BlockPicker(
+              pickerColor: selectedColor,
+              onColorChanged: (Color color) {
+                print(color);
+                selectedColor = color;
+              },
+            ),
+            actions: <Widget>[
+              TextButton(
+                style: TextButton.styleFrom(
+                  textStyle: Theme.of(context).textTheme.labelLarge,
+                ),
+                child: const Text('Select'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              )
+            ],
+          );
+        }
+      );
+    }
 }
 
 // --------------------------------------------------------- Time Frame Page ---------------------------------------------------------
