@@ -808,6 +808,7 @@ class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
                       totalPeople: widget.numberOfPeople,
                       startTime: startTime!,
                       endTime: endTime!,
+                      allAvailability: [], // Pass an empty list for the first initialization
                     ),
                   ),
                 );
@@ -815,14 +816,14 @@ class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF98D4B1),
                 foregroundColor: Colors.black,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
               child: const Text('Next'),
             ),
+
           ],
         ),
       ),
@@ -837,12 +838,14 @@ class ScheduleInputPage extends StatefulWidget {
   final int totalPeople; // Total number of people
   final String startTime; // Selected start time
   final String endTime; // Selected end time
+  final List<List<List<bool>>> allAvailability; // Add a parameter for all users' availability
 
   const ScheduleInputPage({
     required this.personIndex,
     required this.totalPeople,
     required this.startTime,
     required this.endTime,
+    required this.allAvailability, // Pass this from the previous page
     super.key,
   });
 
@@ -970,7 +973,11 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
+                // Add the current user's availability to the list
+                widget.allAvailability.add(availability);
+
                 if (widget.personIndex < widget.totalPeople) {
+                  // Navigate to the next person's schedule input
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -979,11 +986,22 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                         totalPeople: widget.totalPeople,
                         startTime: widget.startTime,
                         endTime: widget.endTime,
+                        allAvailability: widget.allAvailability, // Pass the updated list
                       ),
                     ),
                   );
                 } else {
-                  // Merge all schedules or navigate to a summary page
+                  // Navigate to the mutual availability page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MutualAvailabilityPage(
+                        allAvailability: widget.allAvailability,
+                        days: days,
+                        hours: hours,
+                      ),
+                    ),
+                  );
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -1000,6 +1018,77 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                   : 'Finish'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+
+class MutualAvailabilityPage extends StatelessWidget {
+  final List<List<List<bool>>> allAvailability; // List of all users' availability
+  final List<String> days;
+  final List<String> hours;
+
+  const MutualAvailabilityPage({
+    required this.allAvailability,
+    required this.days,
+    required this.hours,
+    super.key,
+  });
+
+  List<List<bool>> calculateMutualAvailability() {
+    final mutualAvailability = List.generate(
+      days.length,
+      (_) => List.generate(hours.length, (_) => true),
+    );
+
+    for (var userAvailability in allAvailability) {
+      for (int day = 0; day < days.length; day++) {
+        for (int hour = 0; hour < hours.length; hour++) {
+          mutualAvailability[day][hour] &= userAvailability[day][hour];
+        }
+      }
+    }
+
+    return mutualAvailability;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mutualAvailability = calculateMutualAvailability();
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF98D4B1),
+        title: const Text('Mutual Availability', style: TextStyle(color: Colors.black)),
+        centerTitle: true,
+      ),
+      backgroundColor: const Color(0xFFE8F5E9),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: hours.length,
+            childAspectRatio: 1,
+          ),
+          itemCount: days.length * hours.length,
+          itemBuilder: (context, index) {
+            final dayIndex = index ~/ hours.length;
+            final hourIndex = index % hours.length;
+            return Container(
+              margin: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: mutualAvailability[dayIndex][hourIndex] ? Colors.green : Colors.grey,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.black),
+              ),
+              child: Center(
+                child: Text('${days[dayIndex]}\n${hours[hourIndex]}',
+                    textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.white)),
+              ),
+            );
+          },
         ),
       ),
     );
