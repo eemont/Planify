@@ -135,8 +135,6 @@ class LoginPage extends StatefulWidget {
   }
 }
 
-// --------------------------------------------------------- Login Page ---------------------------------------------------------
-
 class LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   bool isHiddenPassword = true;
@@ -163,22 +161,41 @@ class LoginPageState extends State<LoginPage> {
       } on FirebaseAuthException catch (e) {
         // Handle specific Firebase authentication exceptions
         if (e.code == 'user-not-found') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No user found for that email.')),
-          );
+          _showErrorDialog('Error', 'No user found for that email.');
         } else if (e.code == 'wrong-password') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Wrong password provided for that user.')),
-          );
+          _showErrorDialog('Error', 'Wrong password provided for that user.');
+        } else if (e.code == 'invalid-email') {
+          _showErrorDialog('Error', 'The email address is invalid.');
+        } else {
+          // Handle any other FirebaseAuthException errors
+          _showErrorDialog('Error', e.message ?? 'An unknown error occurred.');
         }
       } catch (e) {
         // Handle any other errors
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: ${e.toString()}')),
-        );
+        _showErrorDialog('Error', 'An unexpected error occurred.');
       }
     }
+  }
+
+  // Function to display an AlertDialog for errors
+  void _showErrorDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // Controllers for email and password input
@@ -241,7 +258,7 @@ class LoginPageState extends State<LoginPage> {
                 ),
                 validator: (password) {
                   if (password == null || password.isEmpty) {
-                    return 'Please enter password';
+                    return 'Please enter a password';
                   }
                   return null;
                 },
@@ -271,6 +288,7 @@ class LoginPageState extends State<LoginPage> {
     });
   }
 }
+
 
 // --------------------------------------------------------- Sign Up Page ---------------------------------------------------------
 
@@ -778,14 +796,14 @@ class ScheduleInputPage extends StatefulWidget {
   final int totalPeople; // Total number of people
   final String startTime; // Selected start time
   final String endTime; // Selected end time
-  final List<List<List<bool>>> allAvailability; // Add a parameter for all users' availability
+  final List<List<List<bool>>> allAvailability; // List of availability for all users
 
   const ScheduleInputPage({
     required this.personIndex,
     required this.totalPeople,
     required this.startTime,
     required this.endTime,
-    required this.allAvailability, // Pass this from the previous page
+    required this.allAvailability,
     super.key,
   });
 
@@ -804,20 +822,17 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
     'Friday',
     'Saturday'
   ];
-  late List<List<bool>>
-      availability; // Grid for availability (true = available, false = unavailable)
+  late List<List<bool>> availability; // Availability grid for the current person
 
   @override
   void initState() {
     super.initState();
-    // Generate the list of hours based on the start and end time
     hours = _generateHours(widget.startTime, widget.endTime);
-    // Initialize the availability grid
     availability = List.generate(
         days.length, (_) => List.generate(hours.length, (_) => false));
   }
 
-  // Helper to generate hours based on start and end time
+  // Generate the list of hours between start and end times
   List<String> _generateHours(String start, String end) {
     const timeMapping = {
       "6am": 6,
@@ -836,16 +851,33 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
       "7pm": 19,
       "8pm": 20,
     };
-
     final startHour = timeMapping[start]!;
     final endHour = timeMapping[end]!;
     return List.generate(endHour - startHour + 1, (i) {
-      int hour = (startHour + i) % 24;
+      int hour = startHour + i;
       String period = hour < 12 ? "am" : "pm";
-      if (hour == 0) hour = 12; // Midnight case
-      if (hour > 12) hour -= 12; // Convert to 12-hour format
+      if (hour > 12) hour -= 12;
       return '$hour$period';
     });
+  }
+
+  // Calculate mutual availability
+  List<List<bool>> _calculateMutualAvailability(
+      List<List<List<bool>>> allAvailability) {
+    final mutualAvailability = List.generate(
+      days.length,
+      (_) => List.generate(hours.length, (_) => true),
+    );
+
+    for (var userAvailability in allAvailability) {
+      for (int day = 0; day < days.length; day++) {
+        for (int hour = 0; hour < hours.length; hour++) {
+          mutualAvailability[day][hour] &= userAvailability[day][hour];
+        }
+      }
+    }
+
+    return mutualAvailability;
   }
 
   void toggleAvailability(int dayIndex, int hourIndex) {
@@ -869,17 +901,16 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
+            const Text(
               'Mark your availability',
-              style: const TextStyle(fontSize: 18),
+              style: TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 20),
             Expanded(
               child: GridView.builder(
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: hours.length, // Columns based on hours
+                  crossAxisCount: hours.length,
                   childAspectRatio: 1,
                 ),
                 itemCount: days.length * hours.length,
@@ -913,11 +944,8 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Add the current user's availability to the list
                 widget.allAvailability.add(availability);
-
                 if (widget.personIndex < widget.totalPeople) {
-                  // Navigate to the next person's schedule input
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -926,17 +954,18 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                         totalPeople: widget.totalPeople,
                         startTime: widget.startTime,
                         endTime: widget.endTime,
-                        allAvailability: widget.allAvailability, // Pass the updated list
+                        allAvailability: widget.allAvailability,
                       ),
                     ),
                   );
                 } else {
-                  // Navigate to the mutual availability page
+                  final mutualAvailability =
+                      _calculateMutualAvailability(widget.allAvailability);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => MutualAvailabilityPage(
-                        allAvailability: widget.allAvailability,
+                        mutualAvailability: mutualAvailability,
                         days: days,
                         hours: hours,
                       ),
@@ -947,15 +976,14 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF98D4B1),
                 foregroundColor: Colors.black,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 40, vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              child: Text(widget.personIndex < widget.totalPeople
-                  ? 'Next Person'
-                  : 'Finish'),
+              child: Text(
+                  widget.personIndex < widget.totalPeople ? 'Next Person' : 'Finish'),
             ),
           ],
         ),
@@ -964,73 +992,83 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
   }
 }
 
-
 class MutualAvailabilityPage extends StatelessWidget {
-  final List<List<List<bool>>> allAvailability; // List of all users' availability
+  final List<List<bool>> mutualAvailability;
   final List<String> days;
   final List<String> hours;
 
   const MutualAvailabilityPage({
-    required this.allAvailability,
+    required this.mutualAvailability,
     required this.days,
     required this.hours,
     super.key,
   });
 
-  List<List<bool>> calculateMutualAvailability() {
-    final mutualAvailability = List.generate(
-      days.length,
-      (_) => List.generate(hours.length, (_) => true),
-    );
-
-    for (var userAvailability in allAvailability) {
-      for (int day = 0; day < days.length; day++) {
-        for (int hour = 0; hour < hours.length; hour++) {
-          mutualAvailability[day][hour] &= userAvailability[day][hour];
-        }
-      }
-    }
-
-    return mutualAvailability;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final mutualAvailability = calculateMutualAvailability();
-
+@override
+Widget build(BuildContext context) {
+  // Check if there is any mutual availability
+  if (!mutualAvailability.any((day) => day.contains(true))) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF98D4B1),
-        title: const Text('Mutual Availability', style: TextStyle(color: Colors.black)),
+        title: const Text(
+          'Mutual Availability',
+          style: TextStyle(color: Colors.black),
+        ),
         centerTitle: true,
       ),
       backgroundColor: const Color(0xFFE8F5E9),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: hours.length,
-            childAspectRatio: 1,
-          ),
-          itemCount: days.length * hours.length,
-          itemBuilder: (context, index) {
-            final dayIndex = index ~/ hours.length;
-            final hourIndex = index % hours.length;
-            return Container(
-              margin: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: mutualAvailability[dayIndex][hourIndex] ? Colors.green : Colors.grey,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.black),
-              ),
-              child: Center(
-                child: Text('${days[dayIndex]}\n${hours[hourIndex]}',
-                    textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.white)),
-              ),
-            );
-          },
+      body: Center(
+        child: Text(
+          'No mutual availability found.',
+          style: const TextStyle(fontSize: 18, color: Colors.black),
         ),
       ),
     );
   }
+
+  // Display the mutual availability grid if there are available slots
+  return Scaffold(
+    appBar: AppBar(
+      backgroundColor: const Color(0xFF98D4B1),
+      title: const Text(
+        'Mutual Availability',
+        style: TextStyle(color: Colors.black),
+      ),
+      centerTitle: true,
+    ),
+    backgroundColor: const Color(0xFFE8F5E9),
+    body: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: hours.length,
+          childAspectRatio: 1,
+        ),
+        itemCount: days.length * hours.length,
+        itemBuilder: (context, index) {
+          final dayIndex = index ~/ hours.length;
+          final hourIndex = index % hours.length;
+          return Container(
+            margin: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: mutualAvailability[dayIndex][hourIndex]
+                  ? Colors.green
+                  : Colors.grey,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.black),
+            ),
+            child: Center(
+              child: Text(
+                '${days[dayIndex]}\n${hours[hourIndex]}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12, color: Colors.white),
+              ),
+            ),
+          );
+        },
+      ),
+    ),
+  );
+}
 }
