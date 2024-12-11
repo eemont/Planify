@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -593,6 +595,7 @@ class AddPeoplePage extends StatefulWidget {
 
 class _AddPeoplePageState extends State<AddPeoplePage> {
   int numberOfPeople = 1;
+  Color selectedColor = Colors.red;
 
   void increment() {
     setState(() {
@@ -605,7 +608,18 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
       if (numberOfPeople > 1) numberOfPeople--;
     });
   }
+/*
+  void changeColor(Color color) {
+    setState(() => pickerColor = color);
+  }
 
+
+  void handleColorChanged(Color color) {
+    setState(() {
+      selectedColor = color;
+    });
+  }
+*/
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -666,11 +680,25 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
               ),
               child: const Text('Next'),
             ),
+
+            //***************************************Experimental Color Picker
+
+            /*BlockPicker(
+              pickerColor: Colors.red,
+              onColorChanged: (Color color) {
+                print(color);
+              },
+            )*/
+
+
+            //***************************************Experimental Color Picker End
+
           ],
         ),
       ),
     );
   }
+
 }
 
 // --------------------------------------------------------- Time Frame Page ---------------------------------------------------------
@@ -876,8 +904,57 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
     });
   }
 
+    Color selectedColor = Colors.blue;
+
+    void handleColorChanged(Color color) {
+      setState(() {
+        selectedColor = color;
+      });
+    }
+
   @override
   Widget build(BuildContext context) {
+
+    //Color selectedColor = Colors.blue;
+/*
+    void handleColorChanged(Color color) {
+      setState(() {
+        selectedColor = color;
+      });
+    }*/
+
+    Future<void> dialogBuilder(BuildContext context) {
+      return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Select Color'),
+            content: BlockPicker(
+              pickerColor: selectedColor,
+              onColorChanged: (Color color) {
+                print(color);
+                selectedColor = color;
+                handleColorChanged(color);
+                print(selectedColor);
+              },
+            ),
+            actions: <Widget>[
+              TextButton(
+                style: TextButton.styleFrom(
+                  textStyle: Theme.of(context).textTheme.labelLarge,
+                ),
+                child: const Text('Select'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              )
+            ],
+          );
+        }
+      );
+    }
+
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF98D4B1),
@@ -897,6 +974,14 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
               'Mark your availability',
               style: const TextStyle(fontSize: 18),
             ),
+
+
+            ElevatedButton(
+              onPressed: () => dialogBuilder(context),
+              child: const Text('Select Color'),
+            ),
+
+
             const SizedBox(height: 20),
             Expanded(
               child: Padding(
@@ -1007,7 +1092,7 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                                               decoration: BoxDecoration(
                                                 color: availability[hourIndex]
                                                         [dayIndex]
-                                                    ? Colors.green
+                                                    ? selectedColor
                                                     : const Color.fromARGB(
                                                         255, 149, 149, 149),
                                                 borderRadius:
