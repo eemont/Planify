@@ -1190,6 +1190,7 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
   @override
   void initState() {
     super.initState();
+    String name = 'Person ${widget.personIndex}';
     // Generate the list of hours based on the start and end time
     hours = _generateHours(widget.startTime, widget.endTime);
     // Initialize the availability grid
@@ -1266,9 +1267,27 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF98D4B1),
-        title: Text(
-          'Person ${widget.personIndex} Schedule',
+        /*title: Text(
+          '${widget.name} Schedule',
           style: const TextStyle(color: Colors.black),
+        ),*/
+        title: Wrap(
+          alignment: WrapAlignment.center,
+          runAlignment: WrapAlignment.center,
+          children: [
+            SizedBox(
+              width: 100,
+              height: 30,
+              child: TextField(
+                controller: TextEditingController.fromValue(
+                  TextEditingValue(
+                    text: 'Person ${widget.personIndex}'
+                  )
+                ),
+              ),
+            ),
+            const Text(' Schedule'),
+          ],
         ),
         centerTitle: true,
       ),
