@@ -808,6 +808,8 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
   late List<List<bool>>
       availability; // Grid for availability (true = available, false = unavailable)
 
+  bool _isDragging = false;
+
   @override
   void initState() {
     super.initState();
@@ -933,35 +935,73 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                                 ],
                               ),
                               Expanded(
-                                child: GridView.builder(
-                                  gridDelegate:
-                                      SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: days.length,
-                                    childAspectRatio: cellWidth / cellHeight,
-                                  ),
-                                  itemCount: days.length * hours.length,
-                                  itemBuilder: (context, index) {
-                                    final hourIndex = index ~/ days.length;
-                                    final dayIndex = index % days.length;
-                                    return GestureDetector(
-                                      onTap: () => toggleAvailability(
-                                          hourIndex, dayIndex),
-                                      child: Container(
-                                        margin: const EdgeInsets.all(2),
-                                        decoration: BoxDecoration(
-                                          color: availability[hourIndex]
-                                                  [dayIndex]
-                                              ? Colors.green
-                                              : const Color.fromARGB(
-                                                  255, 149, 149, 149),
-                                          borderRadius:
-                                              BorderRadius.circular(6),
-                                          border:
-                                              Border.all(color: Colors.black12),
-                                        ),
-                                      ),
-                                    );
+                                child: GestureDetector(
+                                  onPanStart: (details) {
+                                    setState(() {
+                                      _isDragging = true;
+                                    });
                                   },
+                                  onPanEnd: (details) {
+                                    setState(() {
+                                      _isDragging = false;
+                                    });
+                                  },
+                                  onPanCancel: () {
+                                    setState(() {
+                                      _isDragging = false;
+                                    });
+                                  },
+                                  child: Listener(
+                                    onPointerDown: (event) {
+                                      setState(() {
+                                        _isDragging = true;
+                                      });
+                                    },
+                                    onPointerUp: (event) {
+                                      setState(() {
+                                        _isDragging = false;
+                                      });
+                                    },
+                                    child: GridView.builder(
+                                      gridDelegate:
+                                          SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: days.length,
+                                        childAspectRatio:
+                                            cellWidth / cellHeight,
+                                      ),
+                                      itemCount: days.length * hours.length,
+                                      itemBuilder: (context, index) {
+                                        final hourIndex = index ~/ days.length;
+                                        final dayIndex = index % days.length;
+                                        return MouseRegion(
+                                          onEnter: (_) {
+                                            if (_isDragging) {
+                                              toggleAvailability(
+                                                  hourIndex, dayIndex);
+                                            }
+                                          },
+                                          child: GestureDetector(
+                                            onTap: () => toggleAvailability(
+                                                hourIndex, dayIndex),
+                                            child: Container(
+                                              margin: const EdgeInsets.all(2),
+                                              decoration: BoxDecoration(
+                                                color: availability[hourIndex]
+                                                        [dayIndex]
+                                                    ? Colors.green
+                                                    : const Color.fromARGB(
+                                                        255, 149, 149, 149),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                border: Border.all(
+                                                    color: Colors.black12),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
