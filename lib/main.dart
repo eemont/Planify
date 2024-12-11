@@ -593,14 +593,14 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
   void changeColor(Color color) {
     setState(() => pickerColor = color);
   }
-*/
+
 
   void handleColorChanged(Color color) {
     setState(() {
       selectedColor = color;
     });
   }
-
+*/
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -664,11 +664,6 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
 
             //***************************************Experimental Color Picker
 
-            ElevatedButton(
-              onPressed: () => _dialogBuilder(context),
-              child: const Text('Select Color'),
-            ),
-
             /*BlockPicker(
               pickerColor: Colors.red,
               onColorChanged: (Color color) {
@@ -684,34 +679,7 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
       ),
     );
   }
-    Future<void> _dialogBuilder(BuildContext context) {
-      return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Select Color'),
-            content: BlockPicker(
-              pickerColor: selectedColor,
-              onColorChanged: (Color color) {
-                print(color);
-                selectedColor = color;
-              },
-            ),
-            actions: <Widget>[
-              TextButton(
-                style: TextButton.styleFrom(
-                  textStyle: Theme.of(context).textTheme.labelLarge,
-                ),
-                child: const Text('Select'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              )
-            ],
-          );
-        }
-      );
-    }
+
 }
 
 // --------------------------------------------------------- Time Frame Page ---------------------------------------------------------
@@ -914,8 +882,57 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
     });
   }
 
+
+  Color selectedColor = Colors.blue;
+  void handleColorChanged(Color color) {
+    setState(() {
+      selectedColor = color;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+
+    //Color selectedColor = Colors.blue;
+/*
+    void handleColorChanged(Color color) {
+      setState(() {
+        selectedColor = color;
+      });
+    }*/
+
+    Future<void> dialogBuilder(BuildContext context) {
+      return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Select Color'),
+            content: BlockPicker(
+              pickerColor: selectedColor,
+              onColorChanged: (Color color) {
+                print(color);
+                selectedColor = color;
+                handleColorChanged(color);
+                print(selectedColor);
+              },
+            ),
+            actions: <Widget>[
+              TextButton(
+                style: TextButton.styleFrom(
+                  textStyle: Theme.of(context).textTheme.labelLarge,
+                ),
+                child: const Text('Select'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              )
+            ],
+          );
+        }
+      );
+    }
+
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF98D4B1),
@@ -935,6 +952,14 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
               'Mark your availability',
               style: const TextStyle(fontSize: 18),
             ),
+
+
+            ElevatedButton(
+              onPressed: () => dialogBuilder(context),
+              child: const Text('Select Color'),
+            ),
+
+
             const SizedBox(height: 20),
             Expanded(
               child: GridView.builder(
@@ -952,7 +977,7 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                       margin: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: availability[dayIndex][hourIndex]
-                            ? Colors.green
+                            ? selectedColor
                             : const Color.fromARGB(255, 149, 149, 149),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.black),
