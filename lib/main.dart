@@ -900,7 +900,7 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
 
   void toggleAvailability(int hourIndex, int dayIndex) {
     setState(() {
-      availability[dayIndex][hourIndex] = !availability[dayIndex][hourIndex];
+      availability[hourIndex][dayIndex] = !availability[hourIndex][dayIndex];
     });
   }
 
