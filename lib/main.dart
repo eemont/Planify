@@ -163,22 +163,41 @@ class LoginPageState extends State<LoginPage> {
       } on FirebaseAuthException catch (e) {
         // Handle specific Firebase authentication exceptions
         if (e.code == 'user-not-found') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No user found for that email.')),
-          );
+          _showErrorDialog('Error', 'No user found for that email.');
         } else if (e.code == 'wrong-password') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Wrong password provided for that user.')),
-          );
+          _showErrorDialog('Error', 'Wrong password provided for that user.');
+        } else if (e.code == 'invalid-email') {
+          _showErrorDialog('Error', 'The email address is invalid.');
+        } else {
+          // Handle any other FirebaseAuthException errors
+          _showErrorDialog('Error', e.message ?? 'An unknown error occurred.');
         }
       } catch (e) {
         // Handle any other errors
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: ${e.toString()}')),
-        );
+        _showErrorDialog('Error', 'An unexpected error occurred.');
       }
     }
+  }
+
+  // Function to display an AlertDialog for errors
+  void _showErrorDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // Controllers for email and password input
