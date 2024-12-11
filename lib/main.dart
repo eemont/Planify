@@ -1190,7 +1190,7 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
   @override
   void initState() {
     super.initState();
-    String name = 'Person ${widget.personIndex}';
+    //String name = 'Person ${widget.personIndex}';
     // Generate the list of hours based on the start and end time
     hours = _generateHours(widget.startTime, widget.endTime);
     // Initialize the availability grid
@@ -1235,6 +1235,14 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
     });
   }
 
+  String name = 'Person';
+
+  Future<void> _setName(String value) async {
+    setState(() {
+      name = value;
+    });
+  }
+
   Future<void> _showColorPicker(BuildContext context) async {
     return showDialog(
       context: context,
@@ -1276,17 +1284,31 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
           runAlignment: WrapAlignment.center,
           children: [
             SizedBox(
-              width: 100,
-              height: 30,
+              width: 150,
+              height: 25,
               child: TextField(
+                cursorHeight: 25,
+                style: TextStyle(
+                  fontSize: 20,
+                  height: 25,
+                ),
                 controller: TextEditingController.fromValue(
                   TextEditingValue(
-                    text: 'Person ${widget.personIndex}'
-                  )
+                    text: name,
+                    selection: TextSelection.collapsed(offset: name.length)
+                  ),
                 ),
+                onChanged: (text){
+                  _setName(text);
+                  print(text);
+                },
               ),
             ),
-            const Text(' Schedule'),
+            SizedBox(
+              width: 100,
+              height: 30,
+              child: const Text(' Schedule'),
+            ),
           ],
         ),
         centerTitle: true,
