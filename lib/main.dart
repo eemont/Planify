@@ -1300,7 +1300,7 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                 ),
                 onChanged: (text){
                   _setName(text);
-                  print(text);
+                  //print(text);
                 },
               ),
             ),
@@ -1446,6 +1446,7 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                 widget.allAvailability.add({
                   'availability': availability,
                   'color': selectedColor,
+                  'name': name,
                 });
 
                 if (widget.personIndex < widget.totalPeople) {
@@ -1668,7 +1669,7 @@ class MutualAvailabilityPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Person ${index + 1}',
+                          allAvailability[index]['name'] as String,
                           style: const TextStyle(fontSize: 12),
                         ),
                       ],
