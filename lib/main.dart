@@ -913,10 +913,19 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
     );
   }
 
+  int pageOffset = 1;
+
+  void _onBackPressed() async {
+    //widget.personIndex = widget.personIndex - 1;
+    pageOffset--;
+    Navigator.maybePop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: BackButton(onPressed: _onBackPressed),
         backgroundColor: const Color(0xFF98D4B1),
         /*title: Text(
           '${widget.name} Schedule',
@@ -1053,7 +1062,8 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                                         onEnter: (_) {
                                           if (_isDragging) {
                                             toggleAvailability(
-                                                hourIndex, dayIndex);
+                                                hourIndex, dayIndex
+                                            );
                                           }
                                         },
                                         child: GestureDetector(
@@ -1095,11 +1105,16 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                   name = 'Person ${widget.personIndex}';
                 }
                 // Add the current user's availability and color to the list
-                widget.allAvailability.add({
-                  'availability': availability,
-                  'color': selectedColor,
-                  'name': name,
-                });
+                if(pageOffset == 1) {
+                  widget.allAvailability.add({
+                    'availability': availability,
+                    'color': selectedColor,
+                    'name': name,
+                  });
+                } else {
+                  widget.allAvailability.removeLast();
+                  pageOffset++;
+                }
 
                 if (widget.personIndex < widget.totalPeople) {
                   // Navigate to the next person's schedule input
@@ -1107,7 +1122,7 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => ScheduleInputPage(
-                        personIndex: widget.personIndex + 1,
+                        personIndex: widget.personIndex + pageOffset,
                         totalPeople: widget.totalPeople,
                         startTime: widget.startTime,
                         endTime: widget.endTime,
@@ -1117,6 +1132,13 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                   );
                 } else {
                   // Navigate to the mutual availability page
+
+                  if(widget.personIndex > widget.totalPeople) {
+                    widget.allAvailability.removeLast();
+                  }
+
+                  print(widget.allAvailability);
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
