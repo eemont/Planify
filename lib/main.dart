@@ -598,7 +598,7 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
 
   void increment() {
     setState(() {
-      numberOfPeople++;
+      if(numberOfPeople < 8) numberOfPeople++;
     });
   }
 
