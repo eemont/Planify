@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -592,6 +593,7 @@ class AddPeoplePage extends StatefulWidget {
 
 class _AddPeoplePageState extends State<AddPeoplePage> {
   int numberOfPeople = 1;
+  Color selectedColor = Colors.red;
 
   void increment() {
     setState(() {
@@ -602,6 +604,18 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
   void decrement() {
     setState(() {
       if (numberOfPeople > 1) numberOfPeople--;
+    });
+  }
+
+
+  void changeColor(Color color) {
+    setState(() => pickerColor = color);
+  }
+
+
+  void handleColorChanged(Color color) {
+    setState(() {
+      selectedColor = color;
     });
   }
 
@@ -774,14 +788,14 @@ class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF98D4B1),
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
               child: const Text('Next'),
             ),
-
           ],
         ),
       ),
@@ -791,12 +805,13 @@ class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
 
 // --------------------------------------------------------- Schedule Input Page ---------------------------------------------------------
 
+
 class ScheduleInputPage extends StatefulWidget {
   final int personIndex; // Index of the person (1-based index)
   final int totalPeople; // Total number of people
   final String startTime; // Selected start time
   final String endTime; // Selected end time
-  final List<List<List<bool>>> allAvailability; // List of availability for all users
+  final List<Map<String, dynamic>> allAvailability; // Availability and colors
 
   const ScheduleInputPage({
     required this.personIndex,
@@ -822,17 +837,22 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
     'Friday',
     'Saturday'
   ];
-  late List<List<bool>> availability; // Availability grid for the current person
+  late List<List<bool>> availability; // Grid for availability
+  Color selectedColor = Colors.blue; // Default color
+
+  bool _isDragging = false;
 
   @override
   void initState() {
     super.initState();
+    // Generate the list of hours based on the start and end time
     hours = _generateHours(widget.startTime, widget.endTime);
+    // Initialize the availability grid
     availability = List.generate(
-        days.length, (_) => List.generate(hours.length, (_) => false));
+        hours.length, (_) => List.generate(days.length, (_) => false));
   }
 
-  // Generate the list of hours between start and end times
+  // Helper to generate hours based on start and end time
   List<String> _generateHours(String start, String end) {
     const timeMapping = {
       "6am": 6,
@@ -851,39 +871,49 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
       "7pm": 19,
       "8pm": 20,
     };
+
     final startHour = timeMapping[start]!;
     final endHour = timeMapping[end]!;
     return List.generate(endHour - startHour + 1, (i) {
-      int hour = startHour + i;
+      int hour = (startHour + i) % 24;
       String period = hour < 12 ? "am" : "pm";
-      if (hour > 12) hour -= 12;
+      if (hour == 0) hour = 12; // Midnight case
+      if (hour > 12) hour -= 12; // Convert to 12-hour format
       return '$hour$period';
     });
   }
 
-  // Calculate mutual availability
-  List<List<bool>> _calculateMutualAvailability(
-      List<List<List<bool>>> allAvailability) {
-    final mutualAvailability = List.generate(
-      days.length,
-      (_) => List.generate(hours.length, (_) => true),
-    );
-
-    for (var userAvailability in allAvailability) {
-      for (int day = 0; day < days.length; day++) {
-        for (int hour = 0; hour < hours.length; hour++) {
-          mutualAvailability[day][hour] &= userAvailability[day][hour];
-        }
-      }
-    }
-
-    return mutualAvailability;
+  void toggleAvailability(int hourIndex, int dayIndex) {
+    setState(() {
+      availability[hourIndex][dayIndex] = !availability[hourIndex][dayIndex];
+    });
   }
 
-  void toggleAvailability(int dayIndex, int hourIndex) {
-    setState(() {
-      availability[dayIndex][hourIndex] = !availability[dayIndex][hourIndex];
-    });
+  Future<void> _showColorPicker(BuildContext context) async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Color'),
+          content: BlockPicker(
+            pickerColor: selectedColor,
+            onColorChanged: (Color color) {
+              setState(() {
+                selectedColor = color;
+              });
+            },
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Select'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -901,50 +931,137 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Text(
               'Mark your availability',
               style: TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => _showColorPicker(context),
+              child: const Text('Select Color'),
+            ),
+            const SizedBox(height: 20),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: hours.length,
-                  childAspectRatio: 1,
-                ),
-                itemCount: days.length * hours.length,
-                itemBuilder: (context, index) {
-                  final dayIndex = index ~/ hours.length;
-                  final hourIndex = index % hours.length;
-                  return GestureDetector(
-                    onTap: () => toggleAvailability(dayIndex, hourIndex),
-                    child: Container(
-                      margin: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: availability[dayIndex][hourIndex]
-                            ? Colors.green
-                            : const Color.fromARGB(255, 149, 149, 149),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.black),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${days[dayIndex]}\n${hours[hourIndex]}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              fontSize: 12, color: Colors.white),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final gridWidth = constraints.maxWidth;
+                    final gridHeight = constraints.maxHeight;
+
+                    // Calculate dimensions for grid cells
+                    final cellWidth = (gridWidth - 40) / days.length;
+                    final cellHeight = (gridHeight - 40) / hours.length;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Day Labels (Top Edge)
+                        Row(
+                          children: [
+                            const SizedBox(width: 40),
+                            for (var day in days)
+                              Container(
+                                width: cellWidth,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  day.substring(0, 3), // Abbreviated day names
+                                  style: const TextStyle(fontSize: 10),
+                                ),
+                              ),
+                          ],
                         ),
-                      ),
-                    ),
-                  );
-                },
+                        // Schedule Grid
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Hour Labels (Left Edge)
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(height: 20),
+                                  for (var hour in hours)
+                                    Container(
+                                      height: cellHeight,
+                                      width: 40,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        hour,
+                                        style: const TextStyle(fontSize: 10),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              Expanded(
+                                child: GestureDetector(
+                                  onPanStart: (_) => setState(() {
+                                    _isDragging = true;
+                                  }),
+                                  onPanEnd: (_) => setState(() {
+                                    _isDragging = false;
+                                  }),
+                                  child: GridView.builder(
+                                    gridDelegate:
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: days.length,
+                                      childAspectRatio: cellWidth / cellHeight,
+                                    ),
+                                    itemCount: days.length * hours.length,
+                                    itemBuilder: (context, index) {
+                                      final hourIndex = index ~/ days.length;
+                                      final dayIndex = index % days.length;
+
+                                      return MouseRegion(
+                                        onEnter: (_) {
+                                          if (_isDragging) {
+                                            toggleAvailability(
+                                                hourIndex, dayIndex);
+                                          }
+                                        },
+                                        child: GestureDetector(
+                                          onTap: () => toggleAvailability(
+                                              hourIndex, dayIndex),
+                                          child: Container(
+                                            margin: const EdgeInsets.all(2),
+                                            decoration: BoxDecoration(
+                                              color: availability[hourIndex]
+                                                      [dayIndex]
+                                                  ? selectedColor
+                                                  : const Color.fromARGB(
+                                                      255, 149, 149, 149),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              border: Border.all(
+                                                  color: Colors.black12),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                widget.allAvailability.add(availability);
+                // Add the current user's availability and color to the list
+                widget.allAvailability.add({
+                  'availability': availability,
+                  'color': selectedColor,
+                });
+
                 if (widget.personIndex < widget.totalPeople) {
                   Navigator.push(
                     context,
@@ -991,11 +1108,13 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
     );
   }
 }
+ --------------------------------------------------------- Mutual Availability Page ---------------------------------------------------------
 
 class MutualAvailabilityPage extends StatelessWidget {
-  final List<List<bool>> mutualAvailability;
-  final List<String> days;
-  final List<String> hours;
+  final List<Map<String, dynamic>>
+      allAvailability; // Includes availability and colors
+  final List<String> days; // Days on the X-axis
+  final List<String> hours; // Hours on the Y-axis
 
   const MutualAvailabilityPage({
     required this.mutualAvailability,
@@ -1004,10 +1123,34 @@ class MutualAvailabilityPage extends StatelessWidget {
     super.key,
   });
 
-@override
-Widget build(BuildContext context) {
-  // Check if there is any mutual availability
-  if (!mutualAvailability.any((day) => day.contains(true))) {
+  // Calculate which persons selected each time/day slot
+  List<List<Set<int>>> calculateSlotSelections() {
+    final slotSelections = List.generate(
+      hours.length,
+      (_) => List.generate(days.length, (_) => <int>{}),
+    );
+
+    for (int personIndex = 0;
+        personIndex < allAvailability.length;
+        personIndex++) {
+      final availability =
+          allAvailability[personIndex]['availability'] as List<List<bool>>;
+      for (int hour = 0; hour < hours.length; hour++) {
+        for (int day = 0; day < days.length; day++) {
+          if (availability[hour][day]) {
+            slotSelections[hour][day].add(personIndex);
+          }
+        }
+      }
+    }
+
+    return slotSelections;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final slotSelections = calculateSlotSelections();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF98D4B1),
@@ -1018,10 +1161,135 @@ Widget build(BuildContext context) {
         centerTitle: true,
       ),
       backgroundColor: const Color(0xFFE8F5E9),
-      body: Center(
-        child: Text(
-          'No mutual availability found.',
-          style: const TextStyle(fontSize: 18, color: Colors.black),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Mutual Availability Grid
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final gridWidth = constraints.maxWidth;
+                    final gridHeight = constraints.maxHeight;
+
+                    // Calculate dimensions for grid cells
+                    final cellWidth = (gridWidth - 40) / days.length;
+                    final cellHeight = (gridHeight - 40) / hours.length;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Day Labels (Top Edge)
+                        Row(
+                          children: [
+                            const SizedBox(width: 40),
+                            for (var day in days)
+                              Container(
+                                width: cellWidth,
+                                alignment: Alignment.center,
+                                child: Text(
+                                  day.substring(0, 3), // Abbreviated day names
+                                  style: const TextStyle(fontSize: 10),
+                                ),
+                              ),
+                          ],
+                        ),
+                        // Mutual Availability Grid
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Hour Labels (Left Edge)
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  for (var hour in hours)
+                                    Container(
+                                      height: cellHeight,
+                                      width: 40,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        hour,
+                                        style: const TextStyle(fontSize: 10),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              Expanded(
+                                child: GridView.builder(
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: days.length,
+                                    childAspectRatio: cellWidth / cellHeight,
+                                  ),
+                                  itemCount: days.length * hours.length,
+                                  itemBuilder: (context, index) {
+                                    final hourIndex = index ~/ days.length;
+                                    final dayIndex = index % days.length;
+                                    final selectedBy =
+                                        slotSelections[hourIndex][dayIndex];
+
+                                    return Container(
+                                      margin: const EdgeInsets.all(2),
+                                      child: BlockChartCell(
+                                        selectedBy: selectedBy,
+                                        colors: allAvailability
+                                            .map((data) =>
+                                                data['color'] as Color)
+                                            .toList(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // List of People with Their Colors (below the grid)
+            SizedBox(
+              height: 100,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: allAvailability.length,
+                itemBuilder: (context, index) {
+                  final color = allAvailability[index]['color'] as Color;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: color,
+                            border: Border.all(color: Colors.black12),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Person ${index + 1}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1071,4 +1339,58 @@ Widget build(BuildContext context) {
     ),
   );
 }
+
+class BlockChartCell extends StatelessWidget {
+  final Set<int> selectedBy; // Indices of persons who selected this slot
+  final List<Color> colors; // List of all person colors
+
+  const BlockChartCell({
+    required this.selectedBy,
+    required this.colors,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: BlockChartPainter(selectedBy: selectedBy, colors: colors),
+      child: Container(),
+    );
+  }
+}
+
+class BlockChartPainter extends CustomPainter {
+  final Set<int> selectedBy;
+  final List<Color> colors;
+
+  BlockChartPainter({required this.selectedBy, required this.colors});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    if (selectedBy.isEmpty) {
+      // No one selected this cell; fill with gray
+      paint.color = Colors.grey;
+      canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
+    } else {
+      // Divide the cell into vertical sections for each person
+      final numSegments = selectedBy.length;
+      final segmentWidth = size.width / numSegments;
+
+      double currentLeft = 0;
+
+      for (final index in selectedBy) {
+        paint.color = colors[index];
+        canvas.drawRect(
+          Rect.fromLTWH(currentLeft, 0, segmentWidth, size.height),
+          paint,
+        );
+        currentLeft += segmentWidth;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
