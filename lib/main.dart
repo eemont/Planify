@@ -608,18 +608,6 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
     });
   }
 
-/*
-  void changeColor(Color color) {
-    setState(() => pickerColor = color);
-  }
-
-
-  void handleColorChanged(Color color) {
-    setState(() {
-      selectedColor = color;
-    });
-  }
-*/
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -806,351 +794,6 @@ class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
 
 // --------------------------------------------------------- Schedule Input Page ---------------------------------------------------------
 
-/*class ScheduleInputPage extends StatefulWidget {
-  final int personIndex; // Index of the person (1-based index)
-  final int totalPeople; // Total number of people
-  final String startTime; // Selected start time
-  final String endTime; // Selected end time
-  final List<List<List<bool>>>
-      allAvailability; // Add a parameter for all users' availability
-
-  const ScheduleInputPage({
-    required this.personIndex,
-    required this.totalPeople,
-    required this.startTime,
-    required this.endTime,
-    required this.allAvailability, // Pass this from the previous page
-    super.key,
-  });
-
-  @override
-  State<ScheduleInputPage> createState() => _ScheduleInputPageState();
-}
-
-class _ScheduleInputPageState extends State<ScheduleInputPage> {
-  late List<String> hours; // List of hours based on the selected timeframe
-  final List<String> days = [
-    'Sunday',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday'
-  ];
-  late List<List<bool>>
-      availability; // Grid for availability (true = available, false = unavailable)
-
-  bool _isDragging = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Generate the list of hours based on the start and end time
-    hours = _generateHours(widget.startTime, widget.endTime);
-    // Initialize the availability grid
-    availability = List.generate(
-        hours.length, (_) => List.generate(days.length, (_) => false));
-  }
-
-  // Helper to generate hours based on start and end time
-  List<String> _generateHours(String start, String end) {
-    const timeMapping = {
-      "6am": 6,
-      "7am": 7,
-      "8am": 8,
-      "9am": 9,
-      "10am": 10,
-      "11am": 11,
-      "12pm": 12,
-      "1pm": 13,
-      "2pm": 14,
-      "3pm": 15,
-      "4pm": 16,
-      "5pm": 17,
-      "6pm": 18,
-      "7pm": 19,
-      "8pm": 20,
-    };
-
-    final startHour = timeMapping[start]!;
-    final endHour = timeMapping[end]!;
-    return List.generate(endHour - startHour + 1, (i) {
-      int hour = (startHour + i) % 24;
-      String period = hour < 12 ? "am" : "pm";
-      if (hour == 0) hour = 12; // Midnight case
-      if (hour > 12) hour -= 12; // Convert to 12-hour format
-      return '$hour$period';
-    });
-  }
-
-  void toggleAvailability(int hourIndex, int dayIndex) {
-    setState(() {
-      availability[hourIndex][dayIndex] = !availability[hourIndex][dayIndex];
-    });
-  }
-
-  Color selectedColor = Colors.blue;
-
-  void handleColorChanged(Color color) {
-    setState(() {
-      selectedColor = color;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    //Color selectedColor = Colors.blue;
-/*
-    void handleColorChanged(Color color) {
-      setState(() {
-        selectedColor = color;
-      });
-    }*/
-
-    Future<void> dialogBuilder(BuildContext context) {
-      return showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Select Color'),
-              content: BlockPicker(
-                pickerColor: selectedColor,
-                onColorChanged: (Color color) {
-                  print(color);
-                  selectedColor = color;
-                  handleColorChanged(color);
-                  print(selectedColor);
-                },
-              ),
-              actions: <Widget>[
-                TextButton(
-                  style: TextButton.styleFrom(
-                    textStyle: Theme.of(context).textTheme.labelLarge,
-                  ),
-                  child: const Text('Select'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                )
-              ],
-            );
-          });
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF98D4B1),
-        title: Text(
-          'Person ${widget.personIndex} Schedule',
-          style: const TextStyle(color: Colors.black),
-        ),
-        centerTitle: true,
-      ),
-      backgroundColor: const Color(0xFFE8F5E9),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'Mark your availability',
-              style: const TextStyle(fontSize: 18),
-            ),
-            ElevatedButton(
-              onPressed: () => dialogBuilder(context),
-              child: const Text('Select Color'),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final gridWidth = constraints.maxWidth;
-                    final gridHeight = constraints.maxHeight;
-
-                    // Calculate dimensions for grid cells
-                    final cellWidth = (gridWidth - 40) / days.length;
-                    final cellHeight = (gridHeight - 40) / hours.length;
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Day Labels (Top Edge)
-                        Row(
-                          children: [
-                            const SizedBox(
-                                width: 40), // Empty space for top-left corner
-                            for (var day in days)
-                              Container(
-                                width: cellWidth,
-                                alignment: Alignment.center,
-                                child: Text(
-                                  day.substring(0, 3), // Abbreviated day names
-                                  style: const TextStyle(fontSize: 10),
-                                ),
-                              ),
-                          ],
-                        ),
-                        // Schedule Grid
-                        Expanded(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Hour Labels (Left Edge)
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const SizedBox(
-                                      height:
-                                          20), // Empty space for top-left corner
-                                  for (var hour in hours)
-                                    Container(
-                                      height: cellHeight,
-                                      width: 40,
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        hour,
-                                        style: const TextStyle(fontSize: 10),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              Expanded(
-                                child: GestureDetector(
-                                  onPanStart: (details) {
-                                    setState(() {
-                                      _isDragging = true;
-                                    });
-                                  },
-                                  onPanEnd: (details) {
-                                    setState(() {
-                                      _isDragging = false;
-                                    });
-                                  },
-                                  onPanCancel: () {
-                                    setState(() {
-                                      _isDragging = false;
-                                    });
-                                  },
-                                  child: Listener(
-                                    onPointerDown: (event) {
-                                      setState(() {
-                                        _isDragging = true;
-                                      });
-                                    },
-                                    onPointerUp: (event) {
-                                      setState(() {
-                                        _isDragging = false;
-                                      });
-                                    },
-                                    child: GridView.builder(
-                                      gridDelegate:
-                                          SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: days.length,
-                                        childAspectRatio:
-                                            cellWidth / cellHeight,
-                                      ),
-                                      itemCount: days.length * hours.length,
-                                      itemBuilder: (context, index) {
-                                        final hourIndex = index ~/ days.length;
-                                        final dayIndex = index % days.length;
-                                        return MouseRegion(
-                                          onEnter: (_) {
-                                            if (_isDragging) {
-                                              toggleAvailability(
-                                                  hourIndex, dayIndex);
-                                            }
-                                          },
-                                          child: GestureDetector(
-                                            onTap: () => toggleAvailability(
-                                                hourIndex, dayIndex),
-                                            child: Container(
-                                              margin: const EdgeInsets.all(2),
-                                              decoration: BoxDecoration(
-                                                color: availability[hourIndex]
-                                                        [dayIndex]
-                                                    ? selectedColor
-                                                    : const Color.fromARGB(
-                                                        255, 149, 149, 149),
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                                border: Border.all(
-                                                    color: Colors.black12),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-onPressed: () {
-  widget.allAvailability.add({
-    'availability': availability,
-    'color': selectedColor,
-  });
-
-  if (widget.personIndex < widget.totalPeople) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ScheduleInputPage(
-          personIndex: widget.personIndex + 1,
-          totalPeople: widget.totalPeople,
-          startTime: widget.startTime,
-          endTime: widget.endTime,
-          allAvailability: widget.allAvailability, // Pass updated list
-        ),
-      ),
-    );
-  } else {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MutualAvailabilityPage(
-          allAvailability: widget.allAvailability,
-          days: days,
-          hours: hours,
-        ),
-      ),
-    );
-  }
-},
-
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF98D4B1),
-                foregroundColor: Colors.black,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: Text(widget.personIndex < widget.totalPeople
-                  ? 'Next Person'
-                  : 'Finish'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}*/
-
 class ScheduleInputPage extends StatefulWidget {
   final int personIndex; // Index of the person (1-based index)
   final int totalPeople; // Total number of people
@@ -1235,7 +878,7 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
     });
   }
 
-  String name = 'Person';
+  String name = '';
 
   Future<void> _setName(String value) async {
     setState(() {
@@ -1284,14 +927,20 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
           runAlignment: WrapAlignment.center,
           children: [
             SizedBox(
-              width: 150,
-              height: 25,
+              width: 220,
+              height: 40,
               child: TextField(
                 cursorHeight: 25,
                 style: TextStyle(
                   fontSize: 20,
                   height: 25,
                 ),
+                decoration: InputDecoration(
+                  labelText: 'Person ${widget.personIndex}',
+                  floatingLabelBehavior: FloatingLabelBehavior.never
+                  //counterText: '',
+                ),
+                maxLength: 15,
                 controller: TextEditingController.fromValue(
                   TextEditingValue(
                     text: name,
@@ -1305,9 +954,9 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
               ),
             ),
             SizedBox(
-              width: 100,
+              width: 120,
               height: 30,
-              child: const Text(' Schedule'),
+              child: const Text('\'s Schedule'),
             ),
           ],
         ),
@@ -1442,6 +1091,9 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
+                if(name == '') {
+                  name = 'Person ${widget.personIndex}';
+                }
                 // Add the current user's availability and color to the list
                 widget.allAvailability.add({
                   'availability': availability,
