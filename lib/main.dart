@@ -598,7 +598,7 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
 
   void increment() {
     setState(() {
-      if(numberOfPeople < 8) numberOfPeople++;
+      if (numberOfPeople < 8) numberOfPeople++;
     });
   }
 
@@ -838,12 +838,21 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
   @override
   void initState() {
     super.initState();
-    //String name = 'Person ${widget.personIndex}';
-    // Generate the list of hours based on the start and end time
     hours = _generateHours(widget.startTime, widget.endTime);
-    // Initialize the availability grid
-    availability = List.generate(
-        hours.length, (_) => List.generate(days.length, (_) => false));
+
+    if (widget.personIndex <= widget.allAvailability.length) {
+      // Load existing data
+      final existingData = widget.allAvailability[widget.personIndex - 1];
+      availability = List<List<bool>>.from(existingData['availability']);
+      selectedColor = existingData['color'] as Color;
+      name = existingData['name'] as String;
+    } else {
+      // Initialize new data
+      availability = List.generate(
+        hours.length,
+        (_) => List.generate(days.length, (_) => false),
+      );
+    }
   }
 
   // Helper to generate hours based on start and end time
@@ -1102,15 +1111,23 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
+                // Add or update the current person's data
                 if (name == '') {
                   name = 'Person ${widget.personIndex}';
                 }
-                // Add the current user's availability and color to the list
-                widget.allAvailability.add({
+                final currentData = {
                   'availability': availability,
                   'color': selectedColor,
                   'name': name,
-                });
+                };
+
+                if (widget.personIndex <= widget.allAvailability.length) {
+                  // Update existing data for this person
+                  widget.allAvailability[widget.personIndex - 1] = currentData;
+                } else {
+                  // Add new data for this person
+                  widget.allAvailability.add(currentData);
+                }
 
                 if (widget.personIndex < widget.totalPeople) {
                   // Navigate to the next person's schedule input
