@@ -690,6 +690,8 @@ class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
   String? startTime = "10am";
   String? endTime = "6pm";
   final List<String> times = [
+    "6am",
+    "7am",
     "8am",
     "9am",
     "10am",
@@ -702,7 +704,10 @@ class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
     "5pm",
     "6pm",
     "7pm",
-    "8pm"
+    "8pm",
+    "9pm",
+    "10pm",
+    "11pm",
   ];
 
   @override
@@ -859,6 +864,9 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
       "6pm": 18,
       "7pm": 19,
       "8pm": 20,
+      "9pm": 21,
+      "10pm": 22,
+      "11pm": 23,
     };
 
     final startHour = timeMapping[start]!;
@@ -945,18 +953,17 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                   height: 25,
                 ),
                 decoration: InputDecoration(
-                  labelText: 'Person ${widget.personIndex}',
-                  floatingLabelBehavior: FloatingLabelBehavior.never
-                  //counterText: '',
-                ),
+                    labelText: 'Person ${widget.personIndex}',
+                    floatingLabelBehavior: FloatingLabelBehavior.never
+                    //counterText: '',
+                    ),
                 maxLength: 15,
                 controller: TextEditingController.fromValue(
                   TextEditingValue(
-                    text: name,
-                    selection: TextSelection.collapsed(offset: name.length)
-                  ),
+                      text: name,
+                      selection: TextSelection.collapsed(offset: name.length)),
                 ),
-                onChanged: (text){
+                onChanged: (text) {
                   _setName(text);
                   //print(text);
                 },
@@ -1026,7 +1033,10 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                               Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const SizedBox(height: 20),
+                                  SizedBox(
+                                      height: gridHeight /
+                                          hours.length *
+                                          0.2), // Adjust padding proportionally
                                   for (var hour in hours)
                                     Container(
                                       height: cellHeight,
@@ -1039,6 +1049,7 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                                     ),
                                 ],
                               ),
+
                               Expanded(
                                 child: GestureDetector(
                                   onPanStart: (_) => setState(() {
@@ -1101,7 +1112,7 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                if(name == '') {
+                if (name == '') {
                   name = 'Person ${widget.personIndex}';
                 }
                 // Add the current user's availability and color to the list
