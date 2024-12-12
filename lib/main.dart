@@ -750,12 +750,7 @@ class _AddPeoplePageState extends State<AddPeoplePage> {
 }
 
 
-=======
-  void increment() {
-    setState(() {
-      if (numberOfPeople < 8) numberOfPeople++;
-    });
-  }
+// --------------------------------------------------------- Time Frame Page ---------------------------------------------------------
 
 
 class SelectTimeFramePage extends StatefulWidget {
@@ -769,29 +764,6 @@ class SelectTimeFramePage extends StatefulWidget {
  State<SelectTimeFramePage> createState() => _SelectTimeFramePageState();
 }
 
-class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
-  String? startTime = "10am";
-  String? endTime = "6pm";
-  final List<String> times = [
-    "6am",
-    "7am",
-    "8am",
-    "9am",
-    "10am",
-    "11am",
-    "12pm",
-    "1pm",
-    "2pm",
-    "3pm",
-    "4pm",
-    "5pm",
-    "6pm",
-    "7pm",
-    "8pm",
-    "9pm",
-    "10pm",
-    "11pm",
-  ];
 
 class _SelectTimeFramePageState extends State<SelectTimeFramePage> {
  String? startTime = "10am";
@@ -944,21 +916,23 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
   @override
   void initState() {
     super.initState();
-
+    // Generate the list of hours based on the start and end time
     hours = _generateHours(widget.startTime, widget.endTime);
 
+    // Initialize availability grid and load saved data if it exists
     if (widget.personIndex <= widget.allAvailability.length) {
-      // Load existing data
+      // Load existing data for this person
       final existingData = widget.allAvailability[widget.personIndex - 1];
       availability = List<List<bool>>.from(existingData['availability']);
       selectedColor = existingData['color'] as Color;
       name = existingData['name'] as String;
     } else {
-      // Initialize new data
+      // Initialize new data for this person
       availability = List.generate(
         hours.length,
         (_) => List.generate(days.length, (_) => false),
       );
+      name = 'Person ${widget.personIndex}'; // Default name
     }
   }
 
@@ -1048,10 +1022,9 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                   height: 1.5,
                 ),
                 decoration: InputDecoration(
-                    labelText: 'Person ${widget.personIndex}',
-                    floatingLabelBehavior: FloatingLabelBehavior.never
-                    //counterText: '',
-                    ),
+                  labelText: 'Person ${widget.personIndex}',
+                  floatingLabelBehavior: FloatingLabelBehavior.never,
+                ),
                 maxLength: 15,
                 controller: TextEditingController.fromValue(
                   TextEditingValue(
@@ -1059,8 +1032,9 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                       selection: TextSelection.collapsed(offset: name.length)),
                 ),
                 onChanged: (text) {
-                  _setName(text);
-                  //print(text);
+                  setState(() {
+                    name = text;
+                  });
                 },
               ),
             ),
@@ -1128,10 +1102,6 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                               Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  SizedBox(
-                                      height: gridHeight /
-                                          hours.length *
-                                          0.2), // Adjust padding proportionally
                                   for (var hour in hours)
                                     Container(
                                       height: cellHeight,
@@ -1144,7 +1114,6 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
                                     ),
                                 ],
                               ),
-
                               Expanded(
                                 child: GestureDetector(
                                   onPanStart: (_) => setState(() {
@@ -1206,21 +1175,18 @@ class _ScheduleInputPageState extends State<ScheduleInputPage> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Add or update the current person's data
-                if (name == '') {
-                  name = 'Person ${widget.personIndex}';
-                }
+                // Save data for this person
                 final currentData = {
                   'availability': availability,
                   'color': selectedColor,
-                  'name': name,
+                  'name': name.isEmpty ? 'Person ${widget.personIndex}' : name,
                 };
 
                 if (widget.personIndex <= widget.allAvailability.length) {
-                  // Update existing data for this person
+                  // Update existing data
                   widget.allAvailability[widget.personIndex - 1] = currentData;
                 } else {
-                  // Add new data for this person
+                  // Add new data
                   widget.allAvailability.add(currentData);
                 }
 
